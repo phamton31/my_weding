@@ -1,39 +1,207 @@
 [
-    { "codigo": "CDVA25", "nombre": "Cesar Duran", "confirmado": false },
-    { "codigo": "CDVA25", "nombre": "Valentina", "confirmado": false },
-    { "codigo": "MS25", "nombre": "Miriam Sanguino", "confirmado": false },
-    { "codigo": "MCZD25", "nombre": "Mabel Castro", "confirmado": false },
-    { "codigo": "MCZD25", "nombre": "Dario Zeko", "confirmado": false },
-    { "codigo": "LC25", "nombre": "Lina Castro", "confirmado": false },
-    { "codigo": "EM25", "nombre": "Emanuel Melo", "confirmado": false },
-    { "codigo": "EC25", "nombre": "Erick Campoverde", "confirmado": false },
-    { "codigo": "NC25", "nombre": "Nicolas", "confirmado": false },
-    { "codigo": "CDNH25", "nombre": "Carlos Duque", "confirmado": false },
-    { "codigo": "CDNH25", "nombre": "Noraly Hernandez", "confirmado": false },
-    { "codigo": "JHEH25", "nombre": "Jose Hernandez", "confirmado": false },
-    { "codigo": "JHEH25", "nombre": "Elena de Hernandez", "confirmado": false },
-    { "codigo": "NMYM25", "nombre": "Neyder Mendoza", "confirmado": false },
-    { "codigo": "NMYM25", "nombre": "Yeimmi Mendoza", "confirmado": false },
-    { "codigo": "EF25", "nombre": "Exneider Forero", "confirmado": false },
-    { "codigo": "AM25", "nombre": "Angel Manosalva", "confirmado": false },
-    { "codigo": "JSAM25", "nombre": "Jenny Santafe", "confirmado": false },
-    { "codigo": "JSAM25", "nombre": "Alfredo Montenegro", "confirmado": false },
-    { "codigo": "HGSD25", "nombre": "Hector Guzman", "confirmado": false },
-    { "codigo": "HGSD25", "nombre": "Sunide", "confirmado": false },
-    { "codigo": "ECZC25", "nombre": "Eduardo Cetina", "confirmado": false },
-    { "codigo": "ECZC25", "nombre": "Ziomara Cetina", "confirmado": false },
-    { "codigo": "AMJM25", "nombre": "Alexander Mora", "confirmado": false },
-    { "codigo": "AMJM25", "nombre": "Jenny de Mora", "confirmado": false },
-    { "codigo": "ESSE25", "nombre": "Edgar Soto", "confirmado": false },
-    { "codigo": "ESSE25", "nombre": "Sandra esposa", "confirmado": false },
-    { "codigo": "UBE25", "nombre": "Uriel Ballona", "confirmado": false },
-    { "codigo": "UBE25", "nombre": "Esposa", "confirmado": false },
-    { "codigo": "JME25", "nombre": "Jose Moray", "confirmado": false },
-    { "codigo": "JME25", "nombre": "Esposa", "confirmado": false },
-    { "codigo": "POE25", "nombre": "Pablo Ortiz", "confirmado": false },
-    { "codigo": "POE25", "nombre": "Esposa", "confirmado": false },
-    { "codigo": "HCGC25", "nombre": "Hermano Camacho", "confirmado": false },
-    { "codigo": "HCGC25", "nombre": "Gloria Camacho", "confirmado": false },
-    { "codigo": "ZVIQ91", "nombre": "Jose Morales", "asistencia": "", "confirmado": false },
-    { "codigo": "ZVIQ91", "nombre": "Gladys Sanguino", "asistencia": "", "confirmado": false }
+    {
+        "codigo": "CDVA25",
+        "nombre": "Cesar Duran",
+        "confirmado": false
+    },
+    {
+        "codigo": "CDVA25",
+        "nombre": "Valentina Suarez",
+        "confirmado": false
+    },
+    {
+        "codigo": "MS25",
+        "nombre": "Miriam Sanguino",
+        "confirmado": false
+    },
+    {
+        "codigo": "MCZD25",
+        "nombre": "Mabel Castro",
+        "confirmado": false
+    },
+    {
+        "codigo": "MCZD25",
+        "nombre": "Dario Zeko",
+        "confirmado": false
+    },
+    {
+        "codigo": "LC25",
+        "nombre": "Lina Castro",
+        "confirmado": false
+    },
+    {
+        "codigo": "BDSN9",
+        "nombre": "Brayan Castro",
+        "confirmado": false
+    },
+    {
+        "codigo": "EM25",
+        "nombre": "Emanuel Melo",
+        "confirmado": false
+    },
+    {
+        "codigo": "EC25",
+        "nombre": "Erick Campoverde",
+        "confirmado": false
+    },
+    {
+        "codigo": "NC25",
+        "nombre": "Nicolas",
+        "confirmado": false
+    },
+    {
+        "codigo": "CDNH25",
+        "nombre": "Carlos Duque",
+        "confirmado": false
+    },
+    {
+        "codigo": "CDNH25",
+        "nombre": "Noraly Hernandez",
+        "confirmado": false
+    },
+    {
+        "codigo": "JHEH25",
+        "nombre": "Jose Hernandez",
+        "confirmado": false
+    },
+    {
+        "codigo": "JHEH25",
+        "nombre": "Elena Hernandez",
+        "confirmado": false
+    },
+    {
+        "codigo": "NMYM25",
+        "nombre": "Neyder Mendoza",
+        "confirmado": false
+    },
+    {
+        "codigo": "NMYM25",
+        "nombre": "Yeimy Mendoza",
+        "confirmado": false
+    },
+    {
+        "codigo": "EF25",
+        "nombre": "Exneider Forero",
+        "confirmado": false
+    },
+    {
+        "codigo": "AM25",
+        "nombre": "Angel Manosalva",
+        "confirmado": false
+    },
+    {
+        "codigo": "JSAM25",
+        "nombre": "Jenny Ortega",
+        "confirmado": false
+    },
+    {
+        "codigo": "JSAM25",
+        "nombre": "Alfredo Ortega",
+        "confirmado": false
+    },
+    {
+        "codigo": "HGSD25",
+        "nombre": "Hector Guzman",
+        "confirmado": false
+    },
+    {
+        "codigo": "HGSD25",
+        "nombre": "Sunide Guzman",
+        "confirmado": false
+    },
+    {
+        "codigo": "ECZC25",
+        "nombre": "Eduardo Cetina",
+        "confirmado": false
+    },
+    {
+        "codigo": "ECZC25",
+        "nombre": "Ziomara Cetina",
+        "confirmado": false
+    },
+    {
+        "codigo": "AMJM25",
+        "nombre": "Alexander Mora",
+        "confirmado": false
+    },
+    {
+        "codigo": "AMJM25",
+        "nombre": "Leidy Amaya",
+        "confirmado": false
+    },
+    {
+        "codigo": "ESSE25",
+        "nombre": "Edgar Soto",
+        "confirmado": false
+    },
+    {
+        "codigo": "ESSE25",
+        "nombre": "Sandra Guzman",
+        "confirmado": false
+    },
+    {
+        "codigo": "UBE25",
+        "nombre": "Uriel Bayona",
+        "confirmado": false
+    },
+    {
+        "codigo": "UBE25",
+        "nombre": "Nereida Bayona",
+        "confirmado": false
+    },
+    {
+        "codigo": "JME25",
+        "nombre": "Juan Mora",
+        "confirmado": false
+    },
+    {
+        "codigo": "JME25",
+        "nombre": "Elida Mora",
+        "confirmado": false
+    },
+    {
+        "codigo": "POE25",
+        "nombre": "Pablo Ortiz",
+        "confirmado": false
+    },
+    {
+        "codigo": "POE25",
+        "nombre": "Marison Carreño",
+        "confirmado": false
+    },
+    {
+        "codigo": "HCGC25",
+        "nombre": "Juan Camacho",
+        "confirmado": false
+    },
+    {
+        "codigo": "HCGC25",
+        "nombre": "Gloria Camacho",
+        "confirmado": false
+    },
+    {
+        "codigo": "ZVIQ91",
+        "nombre": "Jose Morales",
+        "confirmado": false
+    },
+    {
+        "codigo": "ZVIQ91",
+        "nombre": "Gladys Sanguino",
+        "confirmado": false
+    },
+    {
+        "codigo": "EXT58Q",
+        "nombre": "Exio Torrealba",
+        "confirmado": false
+    },
+    {
+        "codigo": "CPJ658",
+        "nombre": "Alex Corredor",
+        "confirmado": false
+    }
+    {
+        "codigo": "CPJ658",
+        "nombre": "Mayra Corredor",
+        "confirmado": false
+    }
 ]
