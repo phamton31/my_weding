@@ -175,18 +175,33 @@ $base_url = "https://my-weding.onrender.com";
         </tr>
       </thead>
       <tbody>
-        <?php foreach ($data as $inv): ?>
+        <?php
+        // Agrupar invitados por código
+        $grupos = [];
+        foreach ($data as $inv) {
+            $codigo = $inv['codigo'];
+            if (!isset($grupos[$codigo])) {
+                $grupos[$codigo] = [
+                    "codigo" => $codigo,
+                    "nombres" => [],
+                    "asistencia" => $inv['asistencia'] ?? '',
+                    "confirmado" => $inv['confirmado'] ?? false
+                ];
+            }
+            $grupos[$codigo]["nombres"][] = $inv['nombre'];
+        }     
+
+        foreach ($grupos as $grupo):
+        ?>
         <tr class="hover:bg-gray-50 text-center">
-          <td class="py-2 px-4 border font-mono"><?= htmlspecialchars($inv['codigo']) ?></td>
-          <td class="py-2 px-4 border"><?= htmlspecialchars(implode(', ', $inv['nombres'])) ?></td>
-          <td class="py-2 px-4 border"><?= htmlspecialchars($inv['asistencia'] ?? '-') ?></td>
-          <td class="py-2 px-4 border">
-            <?= !empty($inv['confirmado']) ? '✅' : '❌' ?>
-          </td>
+          <td class="py-2 px-4 border font-mono"><?= htmlspecialchars($grupo['codigo']) ?></td>
+          <td class="py-2 px-4 border"><?= htmlspecialchars(implode(', ', $grupo['nombres'])) ?></td>
+          <td class="py-2 px-4 border"><?= htmlspecialchars($grupo['asistencia'] ?? '-') ?></td>
+          <td class="py-2 px-4 border"><?= !empty($grupo['confirmado']) ? '✅' : '❌' ?></td>     
 
           <!-- Enlace -->
           <td class="py-2 px-4 border">
-            <?php $link = "{$base_url}/?codigo=" . urlencode($inv['codigo']); ?>
+            <?php $link = "{$base_url}/?codigo=" . urlencode($grupo['codigo']); ?>
             <div class="flex flex-col items-center">
               <input 
                 type="text"
@@ -197,20 +212,21 @@ $base_url = "https://my-weding.onrender.com";
               >
               <a href="<?= htmlspecialchars($link) ?>" target="_blank" class="text-blue-600 hover:underline text-sm">Abrir</a>
             </div>
-          </td>
+          </td>     
 
           <!-- Acciones -->
           <td class="py-2 px-4 border space-x-2">
             <button 
-              onclick="editarInvitado('<?= htmlspecialchars($inv['codigo']) ?>', '<?= htmlspecialchars(implode(', ', $inv['nombres'])) ?>', '<?= htmlspecialchars($inv['asistencia'] ?? '') ?>')"
+              onclick="editarInvitado('<?= htmlspecialchars($grupo['codigo']) ?>', '<?= htmlspecialchars(implode(', ', $grupo['nombres'])) ?>', '<?= htmlspecialchars($grupo['asistencia'] ?? '') ?>')"
               class="text-blue-600 hover:text-blue-800 font-semibold">Editar</button>
-            <a href="?eliminar=<?= urlencode($inv['codigo']) ?>" 
+            <a href="?eliminar=<?= urlencode($grupo['codigo']) ?>" 
                class="text-red-600 hover:text-red-800 font-semibold"
-               onclick="return confirm('¿Seguro que deseas eliminar este invitado?')">Eliminar</a>
+               onclick="return confirm('¿Seguro que deseas eliminar este grupo de invitados?')">Eliminar</a>
           </td>
         </tr>
         <?php endforeach; ?>
       </tbody>
+    
     </table>
   </div>
 
