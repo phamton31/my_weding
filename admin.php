@@ -1,15 +1,18 @@
 <?php
 session_start();
 
+
 // --- LOGIN SIMPLE ---
 $usuario_admin = "admin";
 $password_admin = "Dreiser1234!"; // cámbialo si deseas
+
 
 if (isset($_POST['logout'])) {
     session_destroy();
     header("Location: admin.php");
     exit;
 }
+
 
 if (isset($_POST['usuario']) && isset($_POST['password'])) {
     if ($_POST['usuario'] === $usuario_admin && $_POST['password'] === $password_admin) {
@@ -18,6 +21,7 @@ if (isset($_POST['usuario']) && isset($_POST['password'])) {
         $error = "Usuario o contraseña incorrectos";
     }
 }
+
 
 if (!isset($_SESSION['admin'])):
 ?>
@@ -44,15 +48,22 @@ if (!isset($_SESSION['admin'])):
 exit;
 endif;
 
+
 // --- LÓGICA DEL ADMIN ---
 $jsonFile = 'invitados.json';
+
 
 if (!file_exists($jsonFile)) {
     file_put_contents($jsonFile, '[]');
     chmod($jsonFile, 0666);
 }
 
+
 $data = json_decode(file_get_contents($jsonFile), true);
+if (!is_array($data)) {
+    $data = [];
+}
+
 
 // Función para generar código aleatorio
 function generarCodigo($longitud = 6) {
@@ -60,10 +71,12 @@ function generarCodigo($longitud = 6) {
     return substr(str_shuffle($caracteres), 0, $longitud);
 }
 
+
 // Crear nuevo invitado
 if (isset($_POST['nuevo_invitado'])) {
     $nombres = array_map('trim', $_POST['nombres']); // Array de nombres (1 o 2)
     $codigo = generarCodigo();
+
 
     foreach ($nombres as $nombre) {
         if (!empty($nombre)) {
@@ -76,16 +89,19 @@ if (isset($_POST['nuevo_invitado'])) {
         }
     }
 
+
     file_put_contents($jsonFile, json_encode($data, JSON_PRETTY_PRINT));
     header("Location: admin.php");
     exit;
 }
+
 
 // Editar invitado existente
 if (isset($_POST['editar_invitado'])) {
     $codigo = $_POST['codigo'];
     $nombres = array_map('trim', explode(',', $_POST['nombres']));
     $asistencia = $_POST['asistencia'];
+
 
     $count = 0;
     foreach ($data as &$inv) {
@@ -100,6 +116,7 @@ if (isset($_POST['editar_invitado'])) {
     exit;
 }
 
+
 // Eliminar invitado
 if (isset($_GET['eliminar'])) {
     $codigo = $_GET['eliminar'];
@@ -109,14 +126,17 @@ if (isset($_GET['eliminar'])) {
     exit;
 }
 
+
 // Estadísticas
 $total = count($data);
 $confirmados = count(array_filter($data, fn($i) => !empty($i['confirmado'])));
 $asistiran = count(array_filter($data, fn($i) => isset($i['asistencia']) && strtolower($i['asistencia']) === 'si'));
 $no_asistiran = count(array_filter($data, fn($i) => isset($i['asistencia']) && strtolower($i['asistencia']) === 'no'));
 
+
 $base_url = "https://my-weding.onrender.com";
 ?>
+
 
 <!DOCTYPE html>
 <html lang="es">
@@ -127,6 +147,7 @@ $base_url = "https://my-weding.onrender.com";
 </head>
 <body class="bg-gray-100 min-h-screen p-6">
 
+
 <!-- Header -->
 <div class="flex justify-between items-center mb-6">
     <h1 class="text-3xl font-bold text-gray-800">Panel de Invitados</h1>
@@ -134,6 +155,7 @@ $base_url = "https://my-weding.onrender.com";
         <button name="logout" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Cerrar sesión</button>
     </form>
 </div>
+
 
 <!-- Estadísticas -->
 <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
@@ -154,6 +176,7 @@ $base_url = "https://my-weding.onrender.com";
         <p class="text-2xl font-bold"><?= $no_asistiran ?></p>
     </div>
 </div>
+
 
 <!-- Formulario nuevo invitado con opción de pareja -->
 <div class="bg-white p-4 rounded-lg shadow mb-6">
@@ -178,9 +201,11 @@ $base_url = "https://my-weding.onrender.com";
     </form>
 </div>
 
+
 <script>
 const checkboxPareja = document.getElementById('agregarPareja');
 const parejaDiv = document.getElementById('parejaDiv');
+
 
 checkboxPareja.addEventListener('change', function() {
     if (this.checked) {
@@ -193,6 +218,7 @@ checkboxPareja.addEventListener('change', function() {
     }
 });
 </script>
+
 
 <!-- Tabla de invitados -->
 <div class="bg-white shadow-lg rounded-lg p-4 overflow-x-auto">
@@ -223,6 +249,7 @@ checkboxPareja.addEventListener('change', function() {
             }
             $grupos[$codigo]["nombres"][] = $inv['nombre'];
         }
+
 
         foreach ($grupos as $grupo):
         ?>
@@ -258,6 +285,7 @@ checkboxPareja.addEventListener('change', function() {
     </table>
 </div>
 
+
 <!-- Modal de edición -->
 <div id="modal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center">
     <div class="bg-white rounded-lg shadow-lg p-6 w-96 relative">
@@ -281,6 +309,7 @@ checkboxPareja.addEventListener('change', function() {
     </div>
 </div>
 
+
 <script>
 function editarInvitado(codigo, nombres, asistencia) {
     document.getElementById('modal').classList.remove('hidden');
@@ -292,6 +321,7 @@ function cerrarModal() {
     document.getElementById('modal').classList.add('hidden');
 }
 </script>
+
 
 </body>
 </html>
