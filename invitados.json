@@ -1,11 +1,16 @@
 [
     {
-        "nombre": "dreiser morales",
-        "confirmado": true,
-        "asistencia": "si"
+        "nombre": "Carlos Duque",
+        "confirmado": false,
+        "asistencia": null
     },
     {
-        "nombre": "pablo lopez",
+        "nombre": "Noraly Hernandez",
+        "confirmado": false,
+        "asistencia": null
+    },
+    {
+        "nombre": "Exnneyder Forero",
         "confirmado": true,
         "asistencia": "no"
     }
