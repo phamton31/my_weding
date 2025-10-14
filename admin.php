@@ -1,243 +1,253 @@
 <?php
 session_start();
 
-// 🔐 Contraseña de acceso (puedes cambiarla)
-$PASSWORD = "Dreiser1234!";
+// --- LOGIN SIMPLE ---
+$usuario_admin = "admin";
+$password_admin = "Dreiser1234!"; // cámbialo si deseas
 
-// Si se está enviando el formulario de login
-if (isset($_POST['password'])) {
-    if ($_POST['password'] === $PASSWORD) {
-        $_SESSION['autenticado'] = true;
-    } else {
-        $error = "Contraseña incorrecta.";
-    }
-}
-
-// Si el usuario quiere salir
-if (isset($_GET['logout'])) {
+if (isset($_POST['logout'])) {
     session_destroy();
     header("Location: admin.php");
     exit;
 }
 
-// Si no está autenticado, muestra el login
-if (empty($_SESSION['autenticado'])):
+if (isset($_POST['usuario']) && isset($_POST['password'])) {
+    if ($_POST['usuario'] === $usuario_admin && $_POST['password'] === $password_admin) {
+        $_SESSION['admin'] = true;
+    } else {
+        $error = "Usuario o contraseña incorrectos";
+    }
+}
+
+if (!isset($_SESSION['admin'])):
 ?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <title>Acceso al Panel</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+  <meta charset="UTF-8">
+  <title>Acceso Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gradient-to-br from-blue-100 to-blue-300 flex items-center justify-center h-screen">
-    <form method="POST" class="bg-white p-6 rounded-lg shadow-lg w-80 text-center">
-        <h2 class="text-xl font-bold text-[#5C3A21] mb-4">Panel de Administración</h2>
-        <input type="password" name="password" placeholder="Contraseña" class="border border-gray-300 rounded px-3 py-2 w-full mb-3 focus:ring-2 focus:ring-[#5C3A21] focus:outline-none">
-        <?php if (!empty($error)): ?>
-            <p class="text-red-600 text-sm mb-2"><?= $error ?></p>
-        <?php endif; ?>
-        <button type="submit" class="bg-[#5C3A21] hover:bg-[#7A4C2B] text-white px-4 py-2 rounded w-full transition">Entrar</button>
-    </form>
+<body class="bg-gray-100 flex items-center justify-center h-screen">
+  <form method="POST" class="bg-white p-8 rounded-2xl shadow-lg w-80 space-y-4">
+    <h1 class="text-2xl font-bold text-center">Acceso Admin</h1>
+    <?php if (!empty($error)): ?>
+      <p class="text-red-500 text-sm text-center"><?= htmlspecialchars($error) ?></p>
+    <?php endif; ?>
+    <input type="text" name="usuario" placeholder="Usuario" class="w-full border rounded px-3 py-2">
+    <input type="password" name="password" placeholder="Contraseña" class="w-full border rounded px-3 py-2">
+    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded">Ingresar</button>
+  </form>
 </body>
 </html>
 <?php
 exit;
 endif;
 
-// Configuración del archivo JSON
-$json_file = 'invitados.json';
-$guest_message = null;
-$guest_status = null;
+// --- LÓGICA DEL ADMIN ---
+$jsonFile = 'invitados.json';
 
-// Manejo de mensajes después de la redirección (para agregar o eliminar)
-if (isset($_GET['status']) && isset($_GET['msg'])) {
-    $guest_status = $_GET['status'];
-    $guest_message = htmlspecialchars($_GET['msg']);
+if (!file_exists($jsonFile)) {
+    file_put_contents($jsonFile, '[]');
 }
 
-// --- Lógica para ELIMINAR INVITADO ---
-if (isset($_GET['delete_guest'])) {
-    $guestToDelete = trim($_GET['delete_guest']);
-    $data = json_decode(file_get_contents($json_file), true);
-    $initialCount = count($data);
-    
-    // Filtramos para crear un nuevo array sin el invitado a eliminar
-    $data = array_filter($data, function($inv) use ($guestToDelete) {
-        // Compara el nombre de forma insensible a mayúsculas/minúsculas
-        return mb_strtolower($inv['nombre']) !== mb_strtolower($guestToDelete);
-    });
+$data = json_decode(file_get_contents($jsonFile), true);
 
-    // Reindexar el array para asegurar que el JSON no tenga índices dispersos
-    $data = array_values($data);
-    $finalCount = count($data);
+// Función para generar código aleatorio
+function generarCodigo($longitud = 6) {
+    $caracteres = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    return substr(str_shuffle($caracteres), 0, $longitud);
+}
 
-    if ($finalCount < $initialCount) {
-        // Se encontró y se eliminó al menos uno
-        if (file_put_contents($json_file, json_encode($data, JSON_PRETTY_PRINT))) {
-            $guest_status = 'success';
-            $guest_message = "Invitado '{$guestToDelete}' eliminado exitosamente.";
-        } else {
-            $guest_status = 'error';
-            $guest_message = "Error: No se pudo escribir en el archivo invitados.json. Verifica permisos.";
-        }
-    } else {
-        $guest_status = 'error';
-        $guest_message = "Error: Invitado '{$guestToDelete}' no encontrado o ya eliminado.";
-    }
-
-    // Redireccionar para limpiar los parámetros GET
-    header("Location: admin.php?status={$guest_status}&msg=" . urlencode($guest_message));
+// Crear nuevo invitado
+if (isset($_POST['nuevo_invitado'])) {
+    $nombres = array_map('trim', explode(',', $_POST['nombres']));
+    $codigo = generarCodigo();
+    $nuevo = [
+        "codigo" => $codigo,
+        "nombres" => $nombres,
+        "asistencia" => "",
+        "confirmado" => false
+    ];
+    $data[] = $nuevo;
+    file_put_contents($jsonFile, json_encode($data, JSON_PRETTY_PRINT));
+    header("Location: admin.php");
     exit;
 }
 
-// --- Lógica para AGREGAR INVITADO ---
-if (isset($_POST['new_guest_name'])) {
-    $newGuestName = trim($_POST['new_guest_name']);
-
-    if (!empty($newGuestName)) {
-        $data = json_decode(file_get_contents($json_file), true);
-
-        // Crear el nuevo invitado con estado inicial
-        $newGuest = [
-            'nombre' => $newGuestName,
-            'confirmado' => false,
-            'asistencia' => null
-        ];
-
-        // Verificar si el invitado ya existe (comparación insensible a mayúsculas/minúsculas)
-        $exists = false;
-        foreach ($data as $guest) {
-            if (mb_strtolower($guest['nombre']) === mb_strtolower($newGuestName)) {
-                $exists = true;
-                break;
-            }
+// Editar invitado existente
+if (isset($_POST['editar_invitado'])) {
+    $codigo = $_POST['codigo'];
+    foreach ($data as &$inv) {
+        if ($inv['codigo'] === $codigo) {
+            $inv['nombres'] = array_map('trim', explode(',', $_POST['nombres']));
+            $inv['asistencia'] = $_POST['asistencia'];
+            break;
         }
-
-        if (!$exists) {
-            $data[] = $newGuest; // Agrega el nuevo invitado al array
-
-            // Guarda el array actualizado en el archivo JSON
-            if (file_put_contents($json_file, json_encode($data, JSON_PRETTY_PRINT))) {
-                $guest_message = "Invitado '{$newGuestName}' agregado exitosamente. La lista de RSVP ha sido actualizada.";
-                $guest_status = 'success';
-                // Para evitar el reenvío del formulario al recargar, se redirige.
-                header("Location: admin.php?status={$guest_status}&msg=" . urlencode($guest_message));
-                exit;
-            } else {
-                $guest_message = "Error: No se pudo escribir en el archivo invitados.json. Verifica permisos.";
-                $guest_status = 'error';
-            }
-        } else {
-            $guest_message = "El invitado '{$newGuestName}' ya existe en la lista.";
-            $guest_status = 'warning';
-        }
-    } else {
-        $guest_message = "El nombre del invitado no puede estar vacío.";
-        $guest_status = 'error';
     }
+    file_put_contents($jsonFile, json_encode($data, JSON_PRETTY_PRINT));
+    header("Location: admin.php");
+    exit;
 }
-// ----------------------------------------------------------------------
 
+// Eliminar invitado
+if (isset($_GET['eliminar'])) {
+    $codigo = $_GET['eliminar'];
+    $data = array_filter($data, fn($inv) => $inv['codigo'] !== $codigo);
+    file_put_contents($jsonFile, json_encode(array_values($data), JSON_PRETTY_PRINT));
+    header("Location: admin.php");
+    exit;
+}
 
-// 🔍 Si está autenticado, mostramos el dashboard y cargamos los datos
-$data = json_decode(file_get_contents('invitados.json'), true);
+// Estadísticas
 $total = count($data);
-// Recálculo de estadísticas
-$confirmados = count(array_filter($data, fn($inv) => !empty($inv['asistencia'])));
-$asistiran = count(array_filter($data, fn($inv) => $inv['asistencia'] === 'si'));
-$noasistiran = count(array_filter($data, fn($inv) => $inv['asistencia'] === 'no'));
+$confirmados = count(array_filter($data, fn($i) => !empty($i['confirmado'])));
+$asistiran = count(array_filter($data, fn($i) => isset($i['asistencia']) && strtolower($i['asistencia']) === 'si'));
+$no_asistiran = count(array_filter($data, fn($i) => isset($i['asistencia']) && strtolower($i['asistencia']) === 'no'));
+
+// Base URL (⚠️ CAMBIA ESTO)
+$base_url = "https://my-weding.onrender.com";
 ?>
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <title>Dashboard - Confirmaciones</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+  <meta charset="UTF-8">
+  <title>Panel de Administración</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100 min-h-screen p-6">
-    <div class="max-w-5xl mx-auto bg-white shadow-lg rounded-2xl p-6">
-        <div class="flex justify-between items-center mb-6">
-            <h1 class="text-3xl font-bold text-[#5C3A21]">📊 Panel de Confirmaciones</h1>
-            <a href="?logout=true" class="text-red-600 font-semibold hover:underline">Cerrar sesión</a>
-        </div>
 
-        <!-- FORMULARIO PARA AGREGAR INVITADO -->
-        <div class="bg-yellow-50 border-l-4 border-[#5C3A21] p-4 mb-8 rounded-lg">
-            <h2 class="text-2xl font-bold text-[#5C3A21] mb-4">➕ Agregar Nuevo Invitado</h2>
-            
-            <?php if (!empty($guest_message)): ?>
-                <div class="p-3 mb-4 rounded-lg 
-                    <?= $guest_status === 'success' ? 'bg-green-100 text-green-700' : 
-                       ($guest_status === 'warning' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700') ?>">
-                    <?= $guest_message ?>
-                </div>
-            <?php endif; ?>
+  <!-- Header -->
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-3xl font-bold text-gray-800">Panel de Invitados</h1>
+    <form method="POST">
+      <button name="logout" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Cerrar sesión</button>
+    </form>
+  </div>
 
-            <form method="POST" id="addGuestForm" class="flex flex-col sm:flex-row gap-3">
-                <input type="text" name="new_guest_name" placeholder="Nombre completo del invitado" required
-                       class="border border-gray-300 rounded px-3 py-2 flex-grow focus:ring-2 focus:ring-[#5C3A21] focus:outline-none">
-                <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-2 rounded transition">
-                    Guardar Invitado
-                </button>
-            </form>
-        </div>
-        
-        <!-- ESTADÍSTICAS -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-center mb-6">
-            <div class="bg-green-100 p-4 rounded-lg">
-                <p class="text-2xl font-bold text-green-800"><?= $asistiran ?></p>
-                <p class="text-green-700">Asistirán</p>
-            </div>
-            <div class="bg-red-100 p-4 rounded-lg">
-                <p class="text-2xl font-bold text-red-800"><?= $noasistiran ?></p>
-                <p class="text-red-700">No asistirán</p>
-            </div>
-            <div class="bg-blue-100 p-4 rounded-lg">
-                <p class="text-2xl font-bold text-blue-800"><?= $confirmados ?> / <?= $total ?></p>
-                <p class="text-blue-700">Confirmados / Total</p>
-            </div>
-        </div>
-
-        <!-- LISTA DE INVITADOS -->
-        <table class="w-full border-collapse">
-            <thead>
-                <tr class="bg-[#5C3A21] text-white">
-                    <th class="py-2 px-4 border">Nombre</th>
-                    <th class="py-2 px-4 border">Asistencia</th>
-                    <th class="py-2 px-4 border">Confirmado</th>
-                    <th class="py-2 px-4 border">Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($data as $inv): ?>
-                    <tr class="border-b hover:bg-gray-50">
-                        <td class="py-2 px-4"><?= htmlspecialchars($inv['nombre']) ?></td>
-                        <td class="py-2 px-4 text-center">
-                            <?php if (!empty($inv['asistencia'])): ?>
-                                <span class="<?= $inv['asistencia'] === 'si' ? 'text-green-700 font-semibold' : 'text-red-700 font-semibold' ?>">
-                                    <?= strtoupper($inv['asistencia']) ?>
-                                </span>
-                            <?php else: ?>
-                                <span class="text-gray-400 italic">Sin respuesta</span>
-                            <?php endif; ?>
-                        </td>
-                        <td class="py-2 px-4 text-center">
-                            <?= !empty($inv['confirmado']) && $inv['confirmado'] ? '✅' : '❌' ?>
-                        </td>
-                        <td class="py-2 px-4 text-center">
-                            <!-- Botón de eliminación. Se usa un formulario GET para simplicidad. -->
-                            <form method="GET" onsubmit="return confirm('¿Estás seguro de que quieres eliminar a <?= htmlspecialchars($inv['nombre']) ?> de la lista? Esta acción es irreversible.');">
-                                <input type="hidden" name="delete_guest" value="<?= htmlspecialchars($inv['nombre']) ?>">
-                                <button type="submit" class="bg-red-500 hover:bg-red-600 text-white text-sm px-3 py-1 rounded transition duration-150 shadow-md">
-                                    Eliminar
-                                </button>
-                            </form>
-                        </td>
-                    </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
+  <!-- Estadísticas -->
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+    <div class="bg-white shadow rounded-lg p-4 text-center">
+      <p class="text-gray-500">Total Invitados</p>
+      <p class="text-2xl font-bold"><?= $total ?></p>
     </div>
+    <div class="bg-green-100 shadow rounded-lg p-4 text-center">
+      <p class="text-gray-500">Confirmados</p>
+      <p class="text-2xl font-bold"><?= $confirmados ?></p>
+    </div>
+    <div class="bg-blue-100 shadow rounded-lg p-4 text-center">
+      <p class="text-gray-500">Asistirán</p>
+      <p class="text-2xl font-bold"><?= $asistiran ?></p>
+    </div>
+    <div class="bg-red-100 shadow rounded-lg p-4 text-center">
+      <p class="text-gray-500">No Asistirán</p>
+      <p class="text-2xl font-bold"><?= $no_asistiran ?></p>
+    </div>
+  </div>
+
+  <!-- Formulario nuevo invitado -->
+  <div class="bg-white p-4 rounded-lg shadow mb-6">
+    <h2 class="text-xl font-semibold mb-2">Agregar Nuevo Invitado</h2>
+    <form method="POST" class="flex flex-col md:flex-row md:items-end gap-4">
+      <input type="hidden" name="nuevo_invitado" value="1">
+      <div class="flex-1">
+        <label class="block text-sm text-gray-600 mb-1">Nombres (separados por coma)</label>
+        <input type="text" name="nombres" required class="w-full border rounded px-3 py-2">
+      </div>
+      <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded">
+        Agregar
+      </button>
+    </form>
+  </div>
+
+  <!-- Tabla de invitados -->
+  <div class="bg-white shadow-lg rounded-lg p-4 overflow-x-auto">
+    <table class="min-w-full border border-gray-200">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="py-2 px-4 border">Código</th>
+          <th class="py-2 px-4 border">Nombres</th>
+          <th class="py-2 px-4 border">Asistencia</th>
+          <th class="py-2 px-4 border">Confirmado</th>
+          <th class="py-2 px-4 border">Enlace</th>
+          <th class="py-2 px-4 border">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <?php foreach ($data as $inv): ?>
+        <tr class="hover:bg-gray-50 text-center">
+          <td class="py-2 px-4 border font-mono"><?= htmlspecialchars($inv['codigo']) ?></td>
+          <td class="py-2 px-4 border"><?= htmlspecialchars(implode(', ', $inv['nombres'])) ?></td>
+          <td class="py-2 px-4 border"><?= htmlspecialchars($inv['asistencia'] ?? '-') ?></td>
+          <td class="py-2 px-4 border">
+            <?= !empty($inv['confirmado']) ? '✅' : '❌' ?>
+          </td>
+
+          <!-- Enlace -->
+          <td class="py-2 px-4 border">
+            <?php $link = "{$base_url}/?codigo=" . urlencode($inv['codigo']); ?>
+            <div class="flex flex-col items-center">
+              <input 
+                type="text"
+                readonly
+                value="<?= htmlspecialchars($link) ?>"
+                class="border border-gray-300 rounded px-2 py-1 w-48 text-sm text-center bg-gray-50 cursor-pointer select-all mb-1"
+                onclick="navigator.clipboard.writeText(this.value).then(() => alert('Enlace copiado ✅'))"
+              >
+              <a href="<?= htmlspecialchars($link) ?>" target="_blank" class="text-blue-600 hover:underline text-sm">Abrir</a>
+            </div>
+          </td>
+
+          <!-- Acciones -->
+          <td class="py-2 px-4 border space-x-2">
+            <button 
+              onclick="editarInvitado('<?= htmlspecialchars($inv['codigo']) ?>', '<?= htmlspecialchars(implode(', ', $inv['nombres'])) ?>', '<?= htmlspecialchars($inv['asistencia'] ?? '') ?>')"
+              class="text-blue-600 hover:text-blue-800 font-semibold">Editar</button>
+            <a href="?eliminar=<?= urlencode($inv['codigo']) ?>" 
+               class="text-red-600 hover:text-red-800 font-semibold"
+               onclick="return confirm('¿Seguro que deseas eliminar este invitado?')">Eliminar</a>
+          </td>
+        </tr>
+        <?php endforeach; ?>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Modal de edición -->
+  <div id="modal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center">
+    <div class="bg-white rounded-lg shadow-lg p-6 w-96 relative">
+      <form method="POST" id="formEditar">
+        <input type="hidden" name="editar_invitado" value="1">
+        <input type="hidden" name="codigo" id="editCodigo">
+        <h2 class="text-xl font-semibold mb-4">Editar Invitado</h2>
+        <label class="block mb-1 text-sm text-gray-600">Nombres (coma separados)</label>
+        <input type="text" name="nombres" id="editNombres" required class="w-full border rounded px-3 py-2 mb-3">
+        <label class="block mb-1 text-sm text-gray-600">Asistencia</label>
+        <select name="asistencia" id="editAsistencia" class="w-full border rounded px-3 py-2 mb-4">
+          <option value="">Sin confirmar</option>
+          <option value="si">Sí asistirá</option>
+          <option value="no">No asistirá</option>
+        </select>
+        <div class="flex justify-end gap-3">
+          <button type="button" onclick="cerrarModal()" class="bg-gray-300 px-3 py-2 rounded">Cancelar</button>
+          <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    function editarInvitado(codigo, nombres, asistencia) {
+      document.getElementById('modal').classList.remove('hidden');
+      document.getElementById('editCodigo').value = codigo;
+      document.getElementById('editNombres').value = nombres;
+      document.getElementById('editAsistencia').value = asistencia;
+    }
+    function cerrarModal() {
+      document.getElementById('modal').classList.add('hidden');
+    }
+  </script>
+
 </body>
 </html>
