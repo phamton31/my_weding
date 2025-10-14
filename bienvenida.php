@@ -41,6 +41,25 @@
             padding: 1.5rem;
             box-shadow: 0 10px 20px rgba(0,0,0,0.2);
         }
+        /* Ajuste visual para pantallas pequeñas */
+@media (max-width: 400px) {
+    /* Fondo derecho más pequeño y ajustado */
+    .md\:w-1\/3 {
+        background-size: cover;
+        background-position: center bottom;
+        min-height: 40vh;
+    }
+
+    /* Reduce el padding general */
+    .p-6, .md\:p-12 {
+        padding: 1rem !important;
+    }
+
+    /* Ajusta texto y formulario */
+    .z-10.relative.text-center {
+        transform: translateY(10%);
+    }
+}
     </style>
 </head>
 <body class="bg-gradient-to-br from-blue-100 to-blue-300 min-h-screen flex flex-col md:flex-row">
