@@ -282,105 +282,124 @@
     </section>
 
     <script>
-        // Lógica de carga de invitados (Requiere el archivo invitados.json)
-        const params = new URLSearchParams(window.location.search);
-        const codigo = params.get("codigo");
-        const nombreSelect = document.getElementById("nombre");
-        const mensaje = document.getElementById("mensaje");
-        const errorCodigo = document.getElementById("errorCodigo");
         const form = document.getElementById("rsvpForm");
+        const mensaje = document.getElementById("mensaje");
+        const nombreSelect = document.getElementById("nombre");
+        const asistenciaRadios = document.querySelectorAll('input[name="asistencia"]');
 
+        const urlParams = new URLSearchParams(window.location.search);
+        const codigo = urlParams.get("codigo");
         let invitados = [];
         let invitadoActual = null;
 
-        // Cargar JSON y filtrar por código
+        // ✅ Cargar invitados
         fetch("invitados.json")
             .then(res => res.json())
             .then(data => {
                 invitados = data;
+            
                 if (!codigo) {
-                    errorCodigo.textContent = "❌ Código de invitación no proporcionado en la URL.";
-                    errorCodigo.classList.remove("hidden");
+                    mensaje.textContent = "❌ Código de invitación no proporcionado en la URL.";
                     nombreSelect.innerHTML = '<option value="">Código requerido</option>';
                     nombreSelect.disabled = true;
                     return;
                 }
-
-                invitadoActual = invitados.find(inv => inv.codigo === codigo);
-
-                if (!invitadoActual) {
-                    errorCodigo.textContent = "⚠️ Código no válido. Verifique su enlace de invitación.";
-                    errorCodigo.classList.remove("hidden");
+            
+                // Agrupamos todos los registros con el mismo código
+                const grupo = invitados.filter(inv => inv.codigo === codigo);
+            
+                if (grupo.length === 0) {
+                    mensaje.textContent = "⚠️ Código no válido. Verifique su enlace de invitación.";
                     nombreSelect.innerHTML = '<option value="">Código no encontrado</option>';
                     nombreSelect.disabled = true;
                     return;
                 }
-
-                actualizarSelect(invitadoActual);
+            
+                actualizarSelect(grupo);
             })
             .catch(err => {
                 console.error("Error cargando invitados:", err);
                 nombreSelect.innerHTML = '<option value="">Error al cargar datos</option>';
             });
-
-        function actualizarSelect(inv) {
+        
+        // ✅ Nuevo actualizarSelect
+        function actualizarSelect(grupo) {
             nombreSelect.innerHTML = '<option value="">Seleccione su nombre</option>';
-            inv.nombres.forEach(nombre => {
+        
+            grupo.forEach(inv => {
                 const option = document.createElement("option");
-                option.value = nombre;
-                option.textContent = nombre + (inv.confirmado ? " (Ya confirmado)" : "");
+                option.value = inv.nombre;
+                option.textContent = inv.nombre + (inv.confirmado ? " (Ya confirmado)" : "");
                 option.disabled = inv.confirmado;
                 nombreSelect.appendChild(option);
             });
-
-            if (inv.confirmado) {
-                errorCodigo.textContent = "✅ Este grupo ya confirmó su asistencia.";
-                errorCodigo.classList.remove("hidden");
+        
+            // Verificamos si todo el grupo ya confirmó
+            const todosConfirmados = grupo.every(inv => inv.confirmado);
+            if (todosConfirmados) {
+                mensaje.textContent = "✅ Este grupo ya confirmó su asistencia.";
             }
         }
 
-        // Enviar confirmación
-        form.addEventListener("submit", async (e) => {
+        // ✅ Evento al seleccionar nombre
+        nombreSelect.addEventListener("change", e => {
+            const nombreSeleccionado = e.target.value;
+            invitadoActual = invitados.find(inv => inv.codigo === codigo && inv.nombre === nombreSeleccionado);
+        
+            if (!invitadoActual) {
+                asistenciaRadios.forEach(r => r.checked = false);
+                return;
+            }
+        
+            asistenciaRadios.forEach(r => {
+                r.checked = invitadoActual.asistencia === r.value;
+            });
+        });
+
+        // ✅ Envío del formulario
+        form.addEventListener("submit", e => {
             e.preventDefault();
-
-            if (!invitadoActual) return;
-
-            const nombre = nombreSelect.value.trim();
-            const asistencia = document.getElementById("asistencia").value.trim();
-
-            if (!nombre || !asistencia) {
-                mensaje.textContent = "Por favor complete todos los campos.";
-                mensaje.classList.add("text-red-700");
+        
+            if (!codigo) {
+                mensaje.textContent = "❌ No se encontró el código de invitación.";
                 return;
             }
-
-            if (invitadoActual.confirmado) {
-                mensaje.textContent = "Ya confirmaste tu asistencia. No puedes modificarla.";
-                mensaje.classList.add("text-red-700");
+        
+            const nombre = nombreSelect.value;
+            if (!nombre) {
+                mensaje.textContent = "⚠️ Por favor seleccione su nombre.";
                 return;
             }
-
-            try {
-                const res = await fetch("confirmaciones.php", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ codigo, nombre, asistencia })
-                });
-
-                const data = await res.json();
-
+        
+            const asistencia = document.querySelector('input[name="asistencia"]:checked');
+            if (!asistencia) {
+                mensaje.textContent = "⚠️ Por favor seleccione si asistirá o no.";
+                return;
+            }
+        
+            const formData = new FormData();
+            formData.append("codigo", codigo);
+            formData.append("nombre", nombre);
+            formData.append("asistencia", asistencia.value);
+        
+            fetch("confirmacion.php", {
+                method: "POST",
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
                 if (data.success) {
-                    mensaje.textContent = `¡Gracias, ${nombre}! Tu respuesta ha sido registrada.`;
-                    mensaje.classList.remove("text-red-700");
-                    mensaje.classList.add("text-green-700");
+                    mensaje.textContent = "🎉 Gracias, " + nombre + ". Tu respuesta fue registrada correctamente.";
+                    nombreSelect.querySelector(`option[value="${nombre}"]`).disabled = true;
+                    nombreSelect.value = "";
                 } else {
-                    mensaje.textContent = data.error || "Error al guardar la confirmación.";
-                    mensaje.classList.add("text-red-700");
+                    mensaje.textContent = "⚠️ " + (data.error || "Ocurrió un error al guardar la respuesta.");
                 }
-            } catch (err) {
-                mensaje.textContent = "Error de conexión con el servidor.";
-                mensaje.classList.add("text-red-700");
-            }
+            })
+            .catch(err => {
+                console.error(err);
+                mensaje.textContent = "❌ Error al enviar la confirmación. Intenta nuevamente.";
+            });
         });
 
         // Lógica de Cuenta Regresiva
