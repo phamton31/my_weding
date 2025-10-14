@@ -1,0 +1,12 @@
+[
+    {
+        "nombre": "dreiser morales",
+        "confirmado": true,
+        "asistencia": "si"
+    },
+    {
+        "nombre": "pablo lopez",
+        "confirmado": true,
+        "asistencia": "no"
+    }
+]

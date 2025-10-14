@@ -1,0 +1,6 @@
+services:
+  - type: web
+    name: confirmacion-asistencia
+    env: docker
+    plan: free
+    autoDeploy: true
