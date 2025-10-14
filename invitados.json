@@ -8,10 +8,5 @@
         "nombre": "Noraly Hernandez",
         "confirmado": false,
         "asistencia": null
-    },
-    {
-        "nombre": "Exnneyder Forero",
-        "confirmado": true,
-        "asistencia": "no"
     }
 ]
