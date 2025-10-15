@@ -264,12 +264,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </section>
 
-    <section class="relative bg-[url('img/sobres.png')] bg-cover bg-center bg-no-repeat w-screen h-[205px] bg-opacity-70 text-center">
+    <section class="relative bg-[url('img/sobres.png')] bg-cover bg-center bg-no-repeat w-full h-[180px] sm:h-[220px] md:h-[260px] lg:h-[300px] text-center">
         <!-- Capa semitransparente -->
         <div class="absolute inset-0 bg-blue-300/30"></div>
-              
+
         <!-- Texto centrado -->
-        <h2 class="absolute inset-0 flex items-center justify-center text-8xl text-[#5C3A21] w-[600px] m-auto" style="font-family: 'Allura', cursive; font-style: italic;">
+        <h2 
+            class="absolute inset-0 flex items-center justify-center text-[#5C3A21] 
+                   text-5xl sm:text-6xl md:text-7xl lg:text-8xl 
+                   w-[90%] sm:w-[80%] md:w-[600px] m-auto text-center px-2"
+            style="font-family: 'Allura', cursive; font-style: italic;"
+        >
           Lluvia de sobres
         </h2>
     </section>
