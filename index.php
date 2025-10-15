@@ -383,7 +383,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         function createFlower() {
             const flower = document.createElement('div');
             flower.classList.add('flower');
-            flower.innerHTML = '🌸'; // puedes cambiar por 🌺, 🌷, ❄️ etc.
+            flower.innerHTML = '💮'; // puedes cambiar por 🌺, 🌷, ❄️ etc.
             
             // posición horizontal aleatoria
             flower.style.left = Math.random() * 100 + 'vw';
@@ -399,7 +399,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         // Crear flores constantemente
-        setInterval(createFlower, 300); // cada 0.3 segundos aparece una nueva
+        // setInterval(createFlower, 300);  cada 0.3 segundos aparece una nueva
 
         // Espera la primera interacción del usuario
         document.addEventListener("click", function() {
