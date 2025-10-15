@@ -1,69 +1,67 @@
 <?php
-header('Content-Type: application/json');
-require 'config_db.php';
+// Database connection using PDO
+$host = "dpg-d3nd9e9gv73c739v22f0-a.oregon-postgres.render.com";
+$port = "5432";
+$dbname = "weding";
+$user = "admin";
+$password = "lykC8jNpg625HsWWDtxu6GFkNNb2OJ6V";
+$dsn = "pgsql:host=$host;port=$port;dbname=$dbname";
 
-$action = $_POST['action'] ?? '';
+try {
+    $pdo = new PDO($dsn, $user, $password, [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
+    ]);
+} catch (PDOException $e) {
+    echo json_encode(['success' => false, 'error' => 'No se pudo conectar a la base de datos']);
+    exit;
+}
 
-switch($action) {
+// Function to generate code
+function generarCodigo($longitud = 6) {
+    $caracteres = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    $codigo = '';
+    for ($i = 0; $i < $longitud; $i++) {
+        $codigo .= $caracteres[random_int(0, strlen($caracteres) - 1)];
+    }
+    return $codigo;
+}
 
-    case 'agregar':
-        $nombres = $_POST['nombres'] ?? [];
-        if (!$nombres) {
-            echo json_encode(["success" => false, "error" => "No se enviaron nombres."]);
-            exit;
-        }
+// Get JSON body
+$input = json_decode(file_get_contents('php://input'), true);
 
-        $codigo = uniqid('INV_');
-        foreach ($nombres as $nombre) {
-            $nombre = trim($nombre);
-            if ($nombre) {
-                $query = "INSERT INTO invitados (codigo, nombre) VALUES ($1, $2)";
-                pg_query_params($dbconn, $query, [$codigo, $nombre]);
-            }
-        }
+if (!isset($input['invitados']) || !is_array($input['invitados'])) {
+    echo json_encode(['success' => false, 'error' => 'Datos de invitados inválidos']);
+    exit;
+}
 
-        echo json_encode(["success" => true, "codigo" => $codigo]);
-        break;
+$invitados = $input['invitados'];
+$lastCodigo = null;
 
-    case 'editar':
-        $codigo = $_POST['codigo'] ?? '';
-        $nombres = $_POST['nombres'] ?? [];
-        $asistencia = $_POST['asistencia'] ?? null;
+$pdo->beginTransaction();
 
-        if (!$codigo || !$nombres) {
-            echo json_encode(["success" => false, "error" => "Faltan datos para editar."]);
-            exit;
-        }
+try {
+    $sql = "INSERT INTO invitados2 (codigo, nombre, confirmado, asistencia) VALUES (:codigo, :nombre, :confirmado, :asistencia)";
+    $stmt = $pdo->prepare($sql);
 
-        $query = "SELECT id FROM invitados WHERE codigo = $1 ORDER BY id";
-        $result = pg_query_params($dbconn, $query, [$codigo]);
+    foreach ($invitados as $invitado) {
+        $codigo = generarCodigo();
+        $nombre = isset($invitado['nombre']) ? $invitado['nombre'] : '';
+        $confirmado = isset($invitado['confirmado']) ? filter_var($invitado['confirmado'], FILTER_VALIDATE_BOOLEAN) : false;
+        $asistencia = isset($invitado['asistencia']) && $invitado['asistencia'] !== '' ? $invitado['asistencia'] : null;
 
-        $count = 0;
-        while ($row = pg_fetch_assoc($result)) {
-            if (isset($nombres[$count])) {
-                $update = "UPDATE invitados SET nombre=$1, asistencia=$2 WHERE id=$3";
-                pg_query_params($dbconn, $update, [$nombres[$count], $asistencia, $row['id']]);
-                $count++;
-            }
-        }
+        $stmt->bindValue(':codigo', $codigo, PDO::PARAM_STR);
+        $stmt->bindValue(':nombre', $nombre, PDO::PARAM_STR);
+        $stmt->bindValue(':confirmado', $confirmado, PDO::PARAM_BOOL);
+        $stmt->bindValue(':asistencia', $asistencia, $asistencia === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
 
-        echo json_encode(["success" => true]);
-        break;
+        $stmt->execute();
+        $lastCodigo = $codigo;
+    }
 
-    case 'eliminar':
-        $codigo = $_POST['codigo'] ?? '';
-        if (!$codigo) {
-            echo json_encode(["success" => false, "error" => "Falta el código para eliminar."]);
-            exit;
-        }
+    $pdo->commit();
 
-        $delete = "DELETE FROM invitados WHERE codigo = $1";
-        pg_query_params($dbconn, $delete, [$codigo]);
-
-        echo json_encode(["success" => true]);
-        break;
-
-    default:
-        echo json_encode(["success" => false, "error" => "Acción no válida."]);
-        break;
+    echo json_encode(['success' => true, 'codigo' => $lastCodigo]);
+} catch (PDOException $e) {
+    $pdo->rollBack();
+    echo json_encode(['success' => false, 'error' => 'Error al insertar invitados: ' . $e->getMessage()]);
 }

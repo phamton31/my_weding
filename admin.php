@@ -1,315 +1,227 @@
 <?php
-session_start();
+$host = "dpg-d3nd9e9gv73c739v22f0-a.oregon-postgres.render.com";
+$port = "5432";
+$dbname = "weding";
+$user = "admin";
+$password = "lykC8jNpg625HsWWDtxu6GFkNNb2OJ6V";
+$dsn = "pgsql:host=$host;port=$port;dbname=$dbname";
 
-// --- LOGIN SIMPLE ---
-$usuario_admin = "admin";
-$password_admin = "Dreiser1234!";
+try {
+    $pdo = new PDO($dsn, $user, $password, [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
+    ]);
+} catch (PDOException $e) {
+    die("No se pudo conectar a la base de datos: " . $e->getMessage());
+}
 
-if (isset($_POST['logout'])) {
-    session_destroy();
+// Función para generar código único
+function generarCodigo($longitud = 6) {
+    $caracteres = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    $codigo = '';
+    for ($i = 0; $i < $longitud; $i++) {
+        $codigo .= $caracteres[random_int(0, strlen($caracteres) - 1)];
+    }
+    return $codigo;
+}
+
+// Crear o editar invitado
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $nombre = $_POST["nombre"];
+    $duplicar = isset($_POST["duplicar"]);
+    $editar_id = $_POST["editar_id"] ?? null;
+
+    if ($editar_id) {
+        // Editar invitado existente
+        $sql = "UPDATE invitados SET nombre = :nombre WHERE id = :id";
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindValue(':nombre', $nombre, PDO::PARAM_STR);
+        $stmt->bindValue(':id', $editar_id, PDO::PARAM_INT);
+        $stmt->execute();
+    } else {
+        $codigo = generarCodigo();
+        $confirmado = false;
+        $asistencia = null;
+
+        // Insertar nuevo invitado
+        $sql = "INSERT INTO invitados (codigo, nombre, confirmado, asistencia)
+                VALUES (:codigo, :nombre, :confirmado, :asistencia)";
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindValue(':codigo', $codigo, PDO::PARAM_STR);
+        $stmt->bindValue(':nombre', $nombre, PDO::PARAM_STR);
+        $stmt->bindValue(':confirmado', $confirmado, PDO::PARAM_BOOL);
+        $stmt->bindValue(':asistencia', $asistencia, PDO::PARAM_NULL);
+        $stmt->execute();
+
+        // Duplicar invitado si checkbox está marcado
+        if ($duplicar) {
+            $stmt = $pdo->prepare("INSERT INTO invitados (codigo, nombre, confirmado, asistencia) VALUES (:codigo, :nombre, :confirmado, :asistencia)");
+            $stmt->bindValue(':codigo', $codigo, PDO::PARAM_STR);
+            $stmt->bindValue(':nombre', $nombre, PDO::PARAM_STR);
+            $stmt->bindValue(':confirmado', $confirmado, PDO::PARAM_BOOL);
+            $stmt->bindValue(':asistencia', $asistencia, PDO::PARAM_NULL);
+            $stmt->execute();
+        }
+    }
+}
+
+// Eliminar invitado
+if (isset($_GET['eliminar'])) {
+    $idEliminar = intval($_GET['eliminar']);
+    $stmt = $pdo->prepare("DELETE FROM invitados WHERE id = :id");
+    $stmt->bindValue(':id', $idEliminar, PDO::PARAM_INT);
+    $stmt->execute();
     header("Location: admin.php");
     exit;
 }
 
-if (isset($_POST['usuario']) && isset($_POST['password'])) {
-    if ($_POST['usuario'] === $usuario_admin && $_POST['password'] === $password_admin) {
-        $_SESSION['admin'] = true;
-    } else {
-        $error = "Usuario o contraseña incorrectos";
-    }
-}
+// Obtener lista de invitados
+$stmt = $pdo->query("SELECT * FROM invitados ORDER BY id DESC");
+$invitados = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-if (!isset($_SESSION['admin'])):
-?>
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <title>Acceso Admin</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-gray-100 flex items-center justify-center h-screen">
-  <form method="POST" class="bg-white p-8 rounded-2xl shadow-lg w-80 space-y-4">
-    <h1 class="text-2xl font-bold text-center">Acceso Admin</h1>
-    <?php if (!empty($error)): ?>
-      <p class="text-red-500 text-sm text-center"><?= htmlspecialchars($error) ?></p>
-    <?php endif; ?>
-    <input type="text" name="usuario" placeholder="Usuario" class="w-full border rounded px-3 py-2">
-    <input type="password" name="password" placeholder="Contraseña" class="w-full border rounded px-3 py-2">
-    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded">Ingresar</button>
-  </form>
-</body>
-</html>
-<?php
-exit;
-endif;
+// Estadísticas
+$total = count($invitados);
+$confirmados = count(array_filter($invitados, fn($i) => $i['confirmado']));
+$no_confirmados = $total - $confirmados;
 
-$base_url = "https://my-weding.onrender.com";
+// URL base de la invitación
+$baseURL = "https://my-weding.onrender.com?codigo=";
 ?>
 
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<title>Panel de Administración</title>
-<script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="UTF-8">
+    <title>Panel de Administración - Invitados</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 40px;
+            background: linear-gradient(to right, #f0f4f7, #d9e2ec);
+        }
+        h2 { color: #1b3a57; }
+        .panel {
+            background: #fff;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border-radius: 10px;
+        }
+        input[type="text"], button {
+            padding: 10px;
+            font-size: 16px;
+        }
+        button {
+            cursor: pointer;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            transition: background 0.3s;
+        }
+        button:hover { background: #218838; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            background: #fff;
+        }
+        th, td {
+            padding: 12px;
+            border-bottom: 1px solid #ddd;
+            text-align: left;
+        }
+        th { background: #007bff; color: #fff; }
+        tr:hover { background: #f1f1f1; }
+        .stats { display: flex; gap: 20px; margin-bottom: 20px; }
+        .stat {
+            padding: 20px;
+            border-radius: 10px;
+            flex: 1;
+            text-align: center;
+            color: #fff;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        .stat.total { background: #17a2b8; }
+        .stat.confirmados { background: #28a745; }
+        .stat.no-confirmados { background: #dc3545; }
+        .link { color: #007bff; text-decoration: none; }
+        .link:hover { text-decoration: underline; }
+        .actions a {
+            margin-right: 10px;
+            text-decoration: none;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+        }
+        .edit { background: #ffc107; }
+        .edit:hover { background: #e0a800; }
+        .delete { background: #dc3545; }
+        .delete:hover { background: #c82333; }
+        .checkbox-label { display: flex; align-items: center; gap: 5px; margin-top: 10px; }
+    </style>
 </head>
-<body class="bg-gray-100 min-h-screen p-6">
+<body>
 
-<div class="flex justify-between items-center mb-6">
-    <h1 class="text-3xl font-bold text-gray-800">Panel de Invitados</h1>
+<div class="panel">
+    <h2>Agregar Invitado</h2>
     <form method="POST">
-        <button name="logout" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Cerrar sesión</button>
+        <input type="text" name="nombre" placeholder="Nombre del invitado" required>
+        <div class="checkbox-label">
+            <input type="checkbox" name="duplicar" id="duplicar">
+            <label for="duplicar">Crear otro invitado con el mismo código</label>
+        </div>
+        <button type="submit">Agregar</button>
     </form>
 </div>
 
-<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-    <div class="bg-white shadow rounded-lg p-4 text-center">
-        <p class="text-gray-500">Total Invitados</p>
-        <p class="text-2xl font-bold" id="total">0</p>
+<div class="panel stats">
+    <div class="stat total">
+        <h3>Total Invitados</h3>
+        <p><?= $total ?></p>
     </div>
-    <div class="bg-green-100 shadow rounded-lg p-4 text-center">
-        <p class="text-gray-500">Confirmados</p>
-        <p class="text-2xl font-bold" id="confirmados">0</p>
+    <div class="stat confirmados">
+        <h3>Confirmados</h3>
+        <p><?= $confirmados ?></p>
     </div>
-    <div class="bg-blue-100 shadow rounded-lg p-4 text-center">
-        <p class="text-gray-500">Asistirán</p>
-        <p class="text-2xl font-bold" id="asistiran">0</p>
-    </div>
-    <div class="bg-red-100 shadow rounded-lg p-4 text-center">
-        <p class="text-gray-500">No Asistirán</p>
-        <p class="text-2xl font-bold" id="no_asistiran">0</p>
+    <div class="stat no-confirmados">
+        <h3>No Confirmados</h3>
+        <p><?= $no_confirmados ?></p>
     </div>
 </div>
 
-<div class="bg-white p-4 rounded-lg shadow mb-6">
-    <h2 class="text-xl font-semibold mb-2">Agregar Nuevo Invitado</h2>
-    <form id="formNuevoInvitado" class="flex flex-col md:flex-row md:items-end gap-4">
-        <div class="flex-1">
-            <label class="block text-sm text-gray-600 mb-1">Nombre principal</label>
-            <input type="text" name="nombres[]" required class="w-full border rounded px-3 py-2">
-        </div>
-        <div class="flex-1 hidden" id="parejaDiv">
-            <label class="block text-sm text-gray-600 mb-1">Nombre de la pareja</label>
-            <input type="text" name="nombres[]" class="w-full border rounded px-3 py-2">
-        </div>
-        <div class="flex items-center gap-2">
-            <input type="checkbox" id="agregarPareja" class="h-4 w-4">
-            <label for="agregarPareja" class="text-sm text-gray-600">Agregar pareja</label>
-        </div>
-        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded">Agregar</button>
-    </form>
-</div>
-
-<div class="bg-white shadow-lg rounded-lg p-4 overflow-x-auto">
-    <table class="min-w-full border border-gray-200" id="tablaInvitados">
-        <thead class="bg-gray-50">
-        <tr>
-            <th class="py-2 px-4 border">Código</th>
-            <th class="py-2 px-4 border">Nombres</th>
-            <th class="py-2 px-4 border">Asistencia</th>
-            <th class="py-2 px-4 border">Confirmado</th>
-            <th class="py-2 px-4 border">Enlace</th>
-            <th class="py-2 px-4 border">Acciones</th>
-        </tr>
+<div class="panel">
+    <h2>Lista de Invitados</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Código</th>
+                <th>Nombre</th>
+                <th>Confirmado</th>
+                <th>Asistencia</th>
+                <th>Link de Invitación</th>
+                <th>Acciones</th>
+            </tr>
         </thead>
-        <tbody></tbody>
+        <tbody>
+            <?php foreach ($invitados as $inv): ?>
+                <tr>
+                    <td><?= htmlspecialchars($inv['codigo']) ?></td>
+                    <td><?= htmlspecialchars($inv['nombre']) ?></td>
+                    <td><?= $inv['confirmado'] ? 'Sí' : 'No' ?></td>
+                    <td><?= htmlspecialchars($inv['asistencia'] ?? '-') ?></td>
+                    <td><a class="link" href="<?= $baseURL . urlencode($inv['codigo']) ?>" target="_blank">Ver Invitación</a></td>
+                    <td class="actions">
+                        <a class="edit" href="admin.php?editar=<?= $inv['id'] ?>">Editar</a>
+                        <a class="delete" href="admin.php?eliminar=<?= $inv['id'] ?>" onclick="return confirm('¿Seguro que deseas eliminar este invitado?');">Eliminar</a>
+                    </td>
+                </tr>
+            <?php endforeach; ?>
+        </tbody>
     </table>
 </div>
-
-<div id="modal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center">
-    <div class="bg-white rounded-lg shadow-lg p-6 w-96 relative">
-        <form id="formEditar">
-            <input type="hidden" name="editar_invitado" value="1">
-            <input type="hidden" name="codigo" id="editCodigo">
-            <h2 class="text-xl font-semibold mb-4">Editar Invitado</h2>
-            <label class="block mb-1 text-sm text-gray-600">Nombres (coma separados)</label>
-            <input type="text" name="nombres" id="editNombres" required class="w-full border rounded px-3 py-2 mb-3">
-            <label class="block mb-1 text-sm text-gray-600">Asistencia</label>
-            <select name="asistencia" id="editAsistencia" class="w-full border rounded px-3 py-2 mb-4">
-                <option value="">Pendiente</option>
-                <option value="si">Sí asistirá</option>
-                <option value="no">No asistirá</option>
-            </select>
-            <div class="flex justify-end gap-3">
-                <button type="button" onclick="cerrarModal()" class="bg-gray-300 px-3 py-2 rounded">Cancelar</button>
-                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">Guardar</button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<script>
-const formNuevo = document.getElementById('formNuevoInvitado');
-const checkboxPareja = document.getElementById('agregarPareja');
-const parejaDiv = document.getElementById('parejaDiv');
-const tablaBody = document.querySelector('#tablaInvitados tbody');
-let invitadosData = [];
-
-checkboxPareja.addEventListener('change', function() {
-    if (this.checked) {
-        parejaDiv.classList.remove('hidden');
-        parejaDiv.querySelector('input').required = true;
-    } else {
-        parejaDiv.classList.add('hidden');
-        parejaDiv.querySelector('input').required = false;
-        parejaDiv.querySelector('input').value = '';
-    }
-});
-
-formNuevo.addEventListener('submit', async function(e) {
-    e.preventDefault();
-
-    const nombres = Array.from(formNuevo.querySelectorAll('input[name="nombres[]"]'))
-                        .map(input => input.value.trim())
-                        .filter(n => n.length > 0);
-
-    if (nombres.length === 0) {
-        alert('Debes ingresar al menos un nombre.');
-        return;
-    }
-
-    // Creamos un array de invitados
-    const invitados = nombres.map(nombre => ({
-        codigo: '',          // El backend puede generar el código
-        nombre: nombre,
-        confirmado: false,
-        asistencia: ''
-    }));
-
-    try {
-        const res = await fetch('post_invitado.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ invitados }) // enviamos un objeto con el array
-        });
-
-        const data = await res.json();
-
-        if (data.success) {
-            alert('✅ Invitado agregado correctamente con código: ' + data.codigo);
-            formNuevo.reset();
-            parejaDiv.classList.add('hidden');
-            window.location.reload();
-        } else {
-            alert('⚠️ Error: ' + (data.error || 'No se pudo agregar el invitado'));
-        }
-    } catch (err) {
-        console.error(err);
-        alert('❌ Error al enviar el formulario.');
-    }
-});
-
-function cerrarModal() {
-    document.getElementById('modal').classList.add('hidden');
-}
-
-document.getElementById('formEditar').addEventListener('submit', async function(e){
-    e.preventDefault();
-    const codigo = document.getElementById('editCodigo').value;
-    const nombres = document.getElementById('editNombres').value.split(',').map(n=>n.trim());
-    const asistencia = document.getElementById('editAsistencia').value;
-
-    const formData = new FormData();
-    formData.append('action', 'editar');
-    formData.append('codigo', codigo);
-    nombres.forEach(n => formData.append('nombres[]', n));
-    formData.append('asistencia', asistencia);
-
-    const res = await fetch('post_invitado.php', { method:'POST', body: formData });
-    const data = await res.json();
-    if(data.success) {
-        alert('✅ Invitado editado correctamente');
-        cargarInvitados();
-        cerrarModal();
-    } else {
-        alert('⚠️ Error: '+ (data.error || 'No se pudo editar'));
-    }
-});
-
-async function eliminarInvitado(codigo){
-    if(!confirm('¿Seguro que deseas eliminar este grupo de invitados?')) return;
-    const formData = new FormData();
-    formData.append('action', 'eliminar');
-    formData.append('codigo', codigo);
-    const res = await fetch('post_invitado.php', { method:'POST', body: formData });
-    const data = await res.json();
-    if(data.success){
-        alert('✅ Invitado eliminado');
-        cargarInvitados();
-    } else {
-        alert('⚠️ Error: '+ (data.error || 'No se pudo eliminar'));
-    }
-}
-
-function editarInvitadoModal(codigo, nombres, asistencia){
-    document.getElementById('modal').classList.remove('hidden');
-    document.getElementById('editCodigo').value = codigo;
-    document.getElementById('editNombres').value = nombres;
-    document.getElementById('editAsistencia').value = asistencia;
-}
-
-function renderTabla(data){
-    invitadosData = data;
-    tablaBody.innerHTML = '';
-    let grupos = {};
-    data.forEach(inv => {
-        if(!grupos[inv.codigo]){
-            grupos[inv.codigo] = { codigo: inv.codigo, nombres: [], asistencia: inv.asistencia || '' };
-        }
-        grupos[inv.codigo].nombres.push(inv.nombre);
-    });
-
-    let total=0, confirmados=0, asistiran=0, no_asistiran=0;
-    for(let g of Object.values(grupos)){
-        total++;
-        if(g.asistencia) confirmados++;
-        if(g.asistencia.toLowerCase() === 'si') asistiran++;
-        if(g.asistencia.toLowerCase() === 'no') no_asistiran++;
-
-        const asistenciaDisplay = g.asistencia ? g.asistencia.charAt(0).toUpperCase() + g.asistencia.slice(1) : 'Pendiente';
-        const link = "<?= $base_url ?>/?codigo=" + encodeURIComponent(g.codigo);
-
-        const tr = document.createElement('tr');
-        tr.classList.add('hover:bg-gray-50','text-center');
-        tr.innerHTML = `
-            <td class="py-2 px-4 border font-mono">${g.codigo}</td>
-            <td class="py-2 px-4 border">${g.nombres.join(', ')}</td>
-            <td class="py-2 px-4 border">${asistenciaDisplay}</td>
-            <td class="py-2 px-4 border">${g.asistencia ? '✅':'❌'}</td>
-            <td class="py-2 px-4 border">
-                <div class="flex flex-col items-center">
-                    <input type="text" readonly value="${link}" class="border border-gray-300 rounded px-2 py-1 w-48 text-sm text-center bg-gray-50 cursor-pointer select-all mb-1" onclick="navigator.clipboard.writeText(this.value).then(()=>alert('Enlace copiado ✅'))">
-                    <a href="${link}" target="_blank" class="text-blue-600 hover:underline text-sm">Abrir</a>
-                </div>
-            </td>
-            <td class="py-2 px-4 border space-x-2">
-                <button onclick="editarInvitadoModal('${g.codigo}','${g.nombres.join(', ')}','${g.asistencia}')" class="text-blue-600 hover:text-blue-800 font-semibold">Editar</button>
-                <button onclick="eliminarInvitado('${g.codigo}')" class="text-red-600 hover:text-red-800 font-semibold">Eliminar</button>
-            </td>`;
-        tablaBody.appendChild(tr);
-    }
-
-    document.getElementById('total').innerText = total;
-    document.getElementById('confirmados').innerText = confirmados;
-    document.getElementById('asistiran').innerText = asistiran;
-    document.getElementById('no_asistiran').innerText = no_asistiran;
-}
-
-async function cargarInvitados(){
-    const res = await fetch('get_invitados.php');
-    const data = await res.json();
-    if(data.success){
-        renderTabla(data.data);
-    } else {
-        alert('Error al cargar invitados: ' + data.error);
-    }
-}
-
-window.addEventListener('load', cargarInvitados);
-</script>
 
 </body>
 </html>
