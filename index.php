@@ -90,7 +90,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         @keyframes pulso-contador {
             0%, 100% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.02); opacity: 0.95; } /* Pulso sutil en el reloj */
+            50% { transform: scale(1.08); opacity: 0.95; } /* Pulso sutil en el reloj */
             }
 
             /* Aplicamos la animación de pulso al elemento del contador */
@@ -106,6 +106,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 border-radius: 3px;
                 margin: 0 auto;
                 /* Quitamos la animación de pulso de aquí */
+            }
+           
+            /* Contenedor de las flores */
+            .flower {
+                position: fixed;
+                top: -10px;
+                font-size: 24px;
+                pointer-events: none;
+                animation: fall linear forwards;
+                z-index: 9999;
+            }
+        
+            @keyframes fall {
+                0% {
+                  transform: translateY(0) rotate(0deg);
+                  opacity: 1;
+                }
+                100% {
+                  transform: translateY(100vh) rotate(360deg);
+                  opacity: 0;
+                }
             }
 
     </style>
@@ -217,8 +238,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     <div class="text-center mt-6">
                         <a href="#confirmacion"
-                            class="scroll-indicator text-[#5C3A21] hover:text-[#7A4C2B] font-bold text-3xl transition duration-300">
-                            <svg class="w-10 h-10 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                           class="scroll-indicator bg-[#5C3A21]/80 hover:bg-[#5C3A21] text-white font-bold py-2 px-6 rounded-lg shadow-lg transition duration-300 mt-4 flex items-center justify-center space-x-2"
+                           style="font-family: 'Playfair Display', cursive;">
+                            <span>CONFIRMAR ASISTENCIA</span>
+                            <svg class="w-6 h-6 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                         </a>
                     </div>
                 </div>
@@ -249,7 +272,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </div> 
 
                         <div id="countdown" 
-                             class="countdown-pulsante w-full text-4xl md:text-5xl bg-white/50 p-4 rounded-xl shadow-xl transition-transform duration-200"
+                             class="countdown-pulsante w-full text-5xl bg-white/50 pt-8 rounded-xl shadow-xl transition-transform duration-200"
                              style="font-family: 'WindSong', cursive; font-weight: 400;">
                         </div> 
 
@@ -273,15 +296,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <label for="nombre" class="text-6xl text-[#5C3A21] border-b mb-2 w-[600px]" style="font-family: 'Allura', cursive; font-style: italic;">
                                 Confirma tu Asistencia
                             </label>
-                            <p class="text-2xl text-black text-center mt-2" style="font-family: 'Playfair Display', serif;">
+                            <p class="text-2xl text-black text-center m-4" style="font-family: 'Playfair Display', serif;">
                                 <span style="font-style: italic; font-size: 1.9rem; display: inline-block;">
                                     <?= htmlspecialchars($invitado['nombre']) ?>
                                 </span><br>
                                 Con el fin de que todos podamos disfrutar plenamente de la velada, hemos decidido que esta ocasión será exclusivamente para adultos.
                             </p>
                             <?php if ($invitado['confirmado']): ?>
-                                <p class="text-center font-semibold text-[#5C3A21]">
-                                    Ya has respondido: <strong><?= htmlspecialchars($invitado['asistencia']) ?></strong>
+                                <p class="text-center font-semibold text-[#5C3A21] text-xl p-4">
+                                    Gracias por responder <strong><?= htmlspecialchars($invitado['asistencia']) ?></strong> a nuestra invitacion
                                 </p>
                             <?php else: ?>
                                 <form method="POST" class="mt-4 text-center text-xl max-w-xs mx-auto">
@@ -310,7 +333,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </div>
                     </div>
 
-                    <h2 class="text-2xl md:text-3xl mt-4 font-bold text-[#5C3A21]
+                    <h2 class="text-2xl md:text-5xl mt-4 text-[#5C3A21]
                                drop-shadow-lg hover:scale-105 transition-transform duration-300 text-center bg-white/50 p-4 rounded-xl shadow-xl"
                         style="font-family: 'Allura', cursive; text-shadow: 2px 2px 8px rgba(0,0,0,0.2);">
                         Su presencia es el testimonio más valioso de nuestro amor
@@ -324,6 +347,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
         </div> 
     </section>
+
+    <audio id="musica" loop>
+        <source src="audio/Hasta-Ese-Dia.mp3" type="audio/mpeg">
+    </audio>
 
     <script>
 
@@ -351,7 +378,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         updateCountdown();
         const interval = setInterval(updateCountdown, 1000);
+
+        // Función para crear una flor
+        function createFlower() {
+            const flower = document.createElement('div');
+            flower.classList.add('flower');
+            flower.innerHTML = '🌸'; // puedes cambiar por 🌺, 🌷, ❄️ etc.
+            
+            // posición horizontal aleatoria
+            flower.style.left = Math.random() * 100 + 'vw';
+            flower.style.animationDuration = (5 + Math.random() * 5) + 's'; // velocidad variable
+            flower.style.fontSize = (16 + Math.random() * 20) + 'px'; // tamaño variable
+            
+            document.body.appendChild(flower);
+            
+            // eliminar la flor después de la animación
+            setTimeout(() => {
+              flower.remove();
+            }, 10000);
+        }
+
+        // Crear flores constantemente
+        setInterval(createFlower, 300); // cada 0.3 segundos aparece una nueva
+
+        // Espera la primera interacción del usuario
+        document.addEventListener("click", function() {
+            const audio = document.getElementById("musica");
+            audio.play().catch(err => console.log("Autoplay bloqueado:", err));
+        }, { once: true });
         
     </script>
+
 </body>
 </html>
