@@ -227,8 +227,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </section>
 
     <section id="confirmacion" class="w-full min-h-screen p-6 md:p-12 flex flex-col items-center justify-center relative bg-blue-300/50">
-        <img src="img/juntos.png" alt="Imagen de fondo sutil" 
-         class="absolute inset-0 w-full h-full object-cover opacity-30"> 
         <div class="absolute inset-0 bg-gradient-to-b from-blue-500/10 via-transparent to-blue-500/20"></div>
 
         <div class="z-10 relative w-full max-w-7xl flex flex-col md:flex-row items-stretch justify-center gap-4">
@@ -240,83 +238,84 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%);">
             </div>
 
-            <div class="w-full md:w-3/5 flex flex-col items-center justify-center space-y-8 bg-white/0 p-8 rounded-2xl shadow-2xl">
+            <div class="relative w-full md:w-3/5 flex flex-col items-center justify-center space-y-8 p-8 rounded-2xl shadow-2xl bg-[url('img/juntos.png')] bg-center bg-no-repeat bg-auto">
+                <div class="absolute inset-0 bg-white/40 rounded-2xl pointer-events-none"></div>
+                    <div class="relative z-10 w-full">
+                    <div class="text-center w-full">
+                        <div class="text-3xl md:text-4xl font-bold text-[#5C3A21]"
+                             style="font-family: 'Allura', cursive; text-shadow: 2px 2px 6px rgba(255,255,255,0.7);">
+                            ¡Falta poco!
+                            <div class="linea-pulsante mx-auto -mt-2 mb-4 relative"></div> 
+                        </div> 
 
-                <div class="text-center w-full">
-                    <div class="text-3xl md:text-4xl font-bold text-[#5C3A21]"
-                         style="font-family: 'Allura', cursive; text-shadow: 2px 2px 6px rgba(255,255,255,0.7);">
-                        ¡Falta poco!
-                        <div class="linea-pulsante mx-auto -mt-2 mb-4 relatice"></div> 
-                    </div> 
-
-                    <div id="countdown" 
-                         class="h-[120px] countdown-pulsante w-full text-4xl md:text-5xl bg-white/50 p-4 rounded-xl shadow-xl transition-transform duration-200"
-                         style="font-family: 'WindSong', cursive; font-weight: 400;">
-                    </div> 
-                    
-                </div>
-
-                <div class="w-full h-32 md:h-12 border-b-2 border-[#5C3A21]/20"></div>
-
-                <div class="w-full">
-                                        
-                    <div class="grid grid-cols-3 gap-1 relative overflow-hidden rounded-lg  w-full h-32 md:h-48 opacity-0">
-
-                        <div class="absolute inset-0 z-10 pointer-events-none" 
-                             style="background: linear-gradient(to right, rgba(255, 255, 255, 0.7) 0%, transparent 20%, transparent 80%, rgba(255, 255, 255, 0.7) 100%);">
-                        </div>
+                        <div id="countdown" 
+                             class="countdown-pulsante w-full text-4xl md:text-5xl bg-white/50 p-4 rounded-xl shadow-xl transition-transform duration-200"
+                             style="font-family: 'WindSong', cursive; font-weight: 400;">
+                        </div> 
 
                     </div>
-                </div>
 
-                <div class="w-full bg-white/00 p-2 rounded-2xl text-center">
+                    <div class="w-full h-32 md:h-12 border-b-2 border-[#5C3A21]/20"></div>
+
                     <div class="w-full">
-                        <label for="nombre" class="text-6xl text-[#5C3A21] border-b mb-2 w-[600px]" style="font-family: 'Allura', cursive; font-style: italic;">
-                            Confirma tu Asistencia
-                        </label>
-                        <p class="text-2xl text-black text-center mt-2" style="font-family: 'Playfair Display', serif;">
-                            <span style="font-style: italic; font-size: 1.9rem; display: inline-block;">
-                                <?= htmlspecialchars($invitado['nombre']) ?>
-                            </span><br>
-                            Con el fin de que todos podamos disfrutar plenamente de la velada, hemos decidido que esta ocasión será exclusivamente para adultos.
-                        </p>
-                        <?php if ($invitado['confirmado']): ?>
-                            <p class="text-center font-semibold text-[#5C3A21]">
-                                Ya has respondido: <strong><?= htmlspecialchars($invitado['asistencia']) ?></strong>
-                            </p>
-                        <?php else: ?>
-                            <form method="POST" class="mt-4 text-center text-xl max-w-xs mx-auto">
-                                <p class="mb-4 text-[#5C3A21] font-semibold m-auto">¿Asistirás a la boda?</p>
-                                <div class="flex flex-col space-y-4"> 
-                                    <label class="flex items-center space-x-2 justify-center">
-                                        <input type="radio" name="asistencia" value="si" required class="form-radio">
-                                        <span class="text-[#5C3A21] font-semibold">Sí, asistiré 🎉</span>
-                                    </label>
-                                    <label class="flex items-center space-x-2 justify-center">
-                                        <input type="radio" name="asistencia" value="no" required class="form-radio">
-                                        <span class="text-[#5C3A21] font-semibold">No podré asistir 😔</span>
-                                    </label>
-                                </div>
-                                <button type="submit" class="bg-[#5C3A21] hover:bg-[#7A4C2B] text-white font-bold py-3 px-6 rounded transition duration-300 text-lg shadow-md mx-auto block mt-6">
-                                    Enviar Respuesta
-                                </button>
-                            </form>
-                        <?php endif; ?>
-                        
-                        <?php if ($mensaje): ?>
-                            <div class="mensaje mt-4 text-center text-lg font-bold text-[#5C3A21]">
-                                <?= htmlspecialchars($mensaje) ?>
+
+                        <div class="grid grid-cols-3 gap-1 relative overflow-hidden rounded-lg  w-full h-32 md:h-48 opacity-0">
+
+                            <div class="absolute inset-0 z-10 pointer-events-none" 
+                                 style="background: linear-gradient(to right, rgba(255, 255, 255, 0.7) 0%, transparent 20%, transparent 80%, rgba(255, 255, 255, 0.7) 100%);">
                             </div>
-                        <?php endif; ?>
+
+                        </div>
                     </div>
-                </div>
 
-                <h2 class="text-2xl md:text-3xl mt-4 font-bold text-[#5C3A21]
-                           drop-shadow-lg hover:scale-105 transition-transform duration-300 text-center bg-white/50 p-4 rounded-xl shadow-xl"
-                    style="font-family: 'Allura', cursive; text-shadow: 2px 2px 8px rgba(0,0,0,0.2);">
-                    Su presencia es el testimonio más valioso de nuestro amor
-                </h2>
+                    <div class="w-full bg-white/30 p-2 rounded-2xl text-center">
+                        <div class="w-full">
+                            <label for="nombre" class="text-6xl text-[#5C3A21] border-b mb-2 w-[600px]" style="font-family: 'Allura', cursive; font-style: italic;">
+                                Confirma tu Asistencia
+                            </label>
+                            <p class="text-2xl text-black text-center mt-2" style="font-family: 'Playfair Display', serif;">
+                                <span style="font-style: italic; font-size: 1.9rem; display: inline-block;">
+                                    <?= htmlspecialchars($invitado['nombre']) ?>
+                                </span><br>
+                                Con el fin de que todos podamos disfrutar plenamente de la velada, hemos decidido que esta ocasión será exclusivamente para adultos.
+                            </p>
+                            <?php if ($invitado['confirmado']): ?>
+                                <p class="text-center font-semibold text-[#5C3A21]">
+                                    Ya has respondido: <strong><?= htmlspecialchars($invitado['asistencia']) ?></strong>
+                                </p>
+                            <?php else: ?>
+                                <form method="POST" class="mt-4 text-center text-xl max-w-xs mx-auto">
+                                    <p class="mb-4 text-[#5C3A21] font-semibold m-auto">¿Asistirás a la boda?</p>
+                                    <div class="flex "> 
+                                        <label class="flex items-center space-x-2 justify-center">
+                                            <input type="radio" name="asistencia" value="si" required class="form-radio">
+                                            <span class="text-[#5C3A21] font-semibold">Sí, asistiré 🎉</span>
+                                        </label>
+                                        <label class="flex items-center space-x-2 justify-center">
+                                            <input type="radio" name="asistencia" value="no" required class="form-radio">
+                                            <span class="text-[#5C3A21] font-semibold">No podré asistir 😔</span>
+                                        </label>
+                                    </div>
+                                    <button type="submit" class="bg-[#5C3A21] hover:bg-[#7A4C2B] text-white font-bold py-3 px-6 rounded transition duration-300 text-lg shadow-md mx-auto block mt-6">
+                                        Enviar Respuesta
+                                    </button>
+                                </form>
+                            <?php endif; ?>
+                            
+                            <?php if ($mensaje): ?>
+                                <div class="mensaje mt-4 text-center text-lg font-bold text-[#5C3A21]">
+                                    <?= htmlspecialchars($mensaje) ?>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
 
+                    <h2 class="text-2xl md:text-3xl mt-4 font-bold text-[#5C3A21]
+                               drop-shadow-lg hover:scale-105 transition-transform duration-300 text-center bg-white/50 p-4 rounded-xl shadow-xl"
+                        style="font-family: 'Allura', cursive; text-shadow: 2px 2px 8px rgba(0,0,0,0.2);">
+                        Su presencia es el testimonio más valioso de nuestro amor
+                    </h2>
+                </div>                   
             </div> <div class="hidden md:flex md:w-1/5 items-center justify-center p-4">
                 <img src="img/mayecopia.png" alt="Decoración lateral 2" 
                      class="h-full w-full object-cover rounded-2xl shadow-xl opacity-80"
@@ -327,165 +326,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </section>
 
     <script>
-        const form = document.getElementById("rsvpForm");
-const mensaje = document.getElementById("mensaje");
-const nombreSelect = document.getElementById("nombre");
-const asistenciaSelect = document.getElementById("asistencia");
-const invitadosList = document.getElementById("invitadosList"); // <ul> donde se mostrará la lista
-const urlParams = new URLSearchParams(window.location.search);
-const codigo = urlParams.get("codigo");
-let invitados = [];
-let invitadoActual = null;
 
-// ✅ Cargar invitados desde PHP
-        fetch("get_invitados.php")
-            .then(res => res.json())
-            .then(data => {
-                invitados = data;
-            
-                if (!codigo) {
-                    mensaje.textContent = "❌ Código de invitación no proporcionado en la URL.";
-                    nombreSelect.innerHTML = '<option value="">Código requerido</option>';
-                    nombreSelect.disabled = true;
-                    asistenciaSelect.disabled = true;
-                    return;
-                }
-            
-                const grupo = invitados.filter(inv => inv.codigo === codigo);
-            
-                if (grupo.length === 0) {
-                    mensaje.textContent = "⚠️ Código no válido. Verifique su enlace de invitación.";
-                    nombreSelect.innerHTML = '<option value="">Código no encontrado</option>';
-                    nombreSelect.disabled = true;
-                    asistenciaSelect.disabled = true;
-                    return;
-                }
-            
-                actualizarSelect(grupo);
-                renderLista(grupo); // <-- renderizamos la lista
-            })
-            .catch(err => {
-                console.error("Error cargando invitados:", err);
-                nombreSelect.innerHTML = '<option value="">Error al cargar datos</option>';
-                asistenciaSelect.disabled = true;
-            });
-        
-            function actualizarSelect(grupo) {
-            nombreSelect.innerHTML = '<option value="">Seleccione su nombre</option>';      
-
-            grupo.forEach(inv => {
-                const option = document.createElement("option");
-                option.value = inv.nombre;      
-
-                // Determinar estado según asistencia
-                let estado = "";
-                if (!inv.asistencia || inv.asistencia === "null") {
-                    estado = ""; // no confirmado
-                    option.disabled = false;
-                } else if (inv.asistencia.toLowerCase() === "sí") {
-                    estado = " (Ya confirmado)";
-                    option.disabled = true;
-                } else {
-                    estado = " (No asistirá)";
-                    option.disabled = true;
-                }       
-
-                option.textContent = inv.nombre + estado;
-                nombreSelect.appendChild(option);
-            });     
-
-            // Verificar si todos respondieron
-            const todosRespondieron = grupo.every(inv => inv.asistencia && inv.asistencia.toLowerCase() !== "");
-            if (todosRespondieron) {
-                mensaje.textContent = "✅ Este grupo ya respondió.";
-                nombreSelect.disabled = true;
-                asistenciaSelect.disabled = true;
-            } else {
-                nombreSelect.disabled = false;
-                asistenciaSelect.disabled = false;
-            }
-    }
-
-// Renderizado de lista
-function renderLista(grupo) {
-    if (!invitadosList) return;
-    invitadosList.innerHTML = "";
-
-    grupo.forEach(inv => {
-        let estado = "";
-        if (!inv.asistencia || inv.asistencia === "null") {
-            estado = "❌ Pendiente";
-        } else if (inv.asistencia.toLowerCase() === "sí") {
-            estado = "✅ Confirmado";
-        } else {
-            estado = "❌ No asistirá";
-        }
-
-        const li = document.createElement("li");
-        li.textContent = `${inv.nombre} - ${estado}`;
-        invitadosList.appendChild(li);
-    });
-}
-        
-        // Evento al seleccionar nombre
-        nombreSelect.addEventListener("change", e => {
-            const nombreSeleccionado = e.target.value;
-            invitadoActual = invitados.find(inv => inv.codigo === codigo && inv.nombre === nombreSeleccionado);
-            if (!invitadoActual) {
-                asistenciaSelect.value = "";
-                return;
-            }
-            asistenciaSelect.value = invitadoActual.asistencia || "";
-        });
-        
-        // Envío del formulario
-        form.addEventListener("submit", e => {
-            e.preventDefault();
-            if (!codigo) {
-                mensaje.textContent = "❌ No se encontró el código de invitación.";
-                return;
-            }
-            const nombre = nombreSelect.value;
-            if (!nombre) {
-                mensaje.textContent = "⚠️ Por favor seleccione su nombre.";
-                return;
-            }
-            const asistencia = asistenciaSelect.value;
-            if (!asistencia) {
-                mensaje.textContent = "⚠️ Por favor seleccione si asistirá o no.";
-                return;
-            }
-            const formData = new FormData();
-            formData.append("codigo", codigo);
-            formData.append("nombre", nombre);
-            formData.append("asistencia", asistencia);
-        
-            fetch("confirmacion.php", {
-                method: "POST",
-                body: formData
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    mensaje.textContent = "🎉 Gracias, " + nombre + ". Tu respuesta fue registrada correctamente.";
-                    nombreSelect.querySelector(`option[value="${nombre}"]`).disabled = true;
-                    nombreSelect.value = "";
-                    asistenciaSelect.value = "";
-                
-                    // Actualizamos la lista
-                    const grupo = invitados.filter(inv => inv.codigo === codigo);
-                    renderLista(grupo);
-                } else {
-                    mensaje.textContent = "⚠️ " + (data.error || "Ocurrió un error al guardar la respuesta.");
-                }
-            })
-            .catch(err => {
-                console.error(err);
-                mensaje.textContent = "❌ Error al enviar la confirmación. Intenta nuevamente.";
-            });
-        });
-
-    
         // Lógica de Cuenta Regresiva
         const targetDate = new Date("November 7, 2025 18:30:00").getTime();
         const countdownElement = document.getElementById("countdown");
