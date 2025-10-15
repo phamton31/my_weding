@@ -166,7 +166,7 @@
     },
     {
         "codigo": "POE25",
-        "nombre": "Marison Carreño",
+        "nombre": "Marison Carre\u00f1o",
         "confirmado": false
     },
     {
@@ -203,5 +203,17 @@
         "codigo": "CPJ658",
         "nombre": "Mayra Corredor",
         "confirmado": false
+    },
+    {
+        "codigo": "98FBOI",
+        "nombre": "Bryant Campoverde",
+        "confirmado": false,
+        "asistencia": ""
+    },
+    {
+        "codigo": "98FBOI",
+        "nombre": "Dana Soto",
+        "confirmado": false,
+        "asistencia": ""
     }
 ]
