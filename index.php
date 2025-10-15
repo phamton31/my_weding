@@ -1,3 +1,57 @@
+<?php
+$host = "dpg-d3nd9e9gv73c739v22f0-a.oregon-postgres.render.com";
+$port = "5432";
+$dbname = "weding";
+$user = "admin";
+$password = "lykC8jNpg625HsWWDtxu6GFkNNb2OJ6V";
+$dsn = "pgsql:host=$host;port=$port;dbname=$dbname";
+
+try {
+    $pdo = new PDO($dsn, $user, $password, [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
+    ]);
+} catch (PDOException $e) {
+    die("No se pudo conectar a la base de datos: " . $e->getMessage());
+}
+
+// Obtener código desde URL
+$codigo = $_GET['codigo'] ?? null;
+if (!$codigo) {
+    die("Código de invitación no válido.");
+}
+
+// Buscar invitado
+$stmt = $pdo->prepare("SELECT * FROM invitados WHERE codigo = :codigo LIMIT 1");
+$stmt->bindValue(':codigo', $codigo, PDO::PARAM_STR);
+$stmt->execute();
+$invitado = $stmt->fetch(PDO::FETCH_ASSOC);
+
+if (!$invitado) {
+    die("Invitado no encontrado.");
+}
+
+// Manejar respuesta POST
+$mensaje = "";
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if ($invitado['confirmado']) {
+        $mensaje = "Ya has respondido a la invitación. No se puede cambiar la respuesta.";
+    } else {
+        $asistencia = $_POST['asistencia'] ?? '';
+        if ($asistencia === 'si' || $asistencia === 'no') {
+            $stmt = $pdo->prepare("UPDATE invitados SET confirmado = TRUE, asistencia = :asistencia WHERE id = :id");
+            $stmt->bindValue(':asistencia', $asistencia === 'si' ? 'Sí' : 'No', PDO::PARAM_STR);
+            $stmt->bindValue(':id', $invitado['id'], PDO::PARAM_INT);
+            $stmt->execute();
+            $mensaje = "¡Gracias! Tu respuesta ha sido registrada.";
+            $invitado['confirmado'] = true;
+            $invitado['asistencia'] = $asistencia === 'si' ? 'Asistirá' : 'No asistirá';
+        } else {
+            $mensaje = "Por favor selecciona una opción válida.";
+        }
+    }
+}
+?>
+
 <!DOCTYPE html>
 <html lang="es" class="scroll-smooth">
 <head>
@@ -17,6 +71,10 @@
             font-family: 'Playfair Display', serif;
             /* El degradado de fondo principal del body ahora se encarga de la consistencia */
             background-attachment: fixed; /* Esto hace que el degradado del body se mueva suavemente */
+        }
+        #countdown {
+          margin-top: 0 !important;
+          padding-top: 0 !important;
         }
 
         /* La animación de rotación para la flecha de scroll */
@@ -188,16 +246,17 @@
                     <div class="text-3xl md:text-4xl font-bold text-[#5C3A21]"
                          style="font-family: 'Allura', cursive; text-shadow: 2px 2px 6px rgba(255,255,255,0.7);">
                         ¡Falta poco!
-                        <div class="linea-pulsante mx-auto -mt-2 mb-4"></div> 
+                        <div class="linea-pulsante mx-auto -mt-2 mb-4 relatice"></div> 
                     </div> 
 
                     <div id="countdown" 
-                         class="countdown-pulsante w-full text-4xl md:text-5xl bg-white/50 p-4 rounded-xl shadow-xl transition-transform duration-200"
-                         style="font-family: 'WindSong', cursive; font-weight: 500;">
+                         class="h-[120px] countdown-pulsante w-full text-4xl md:text-5xl bg-white/50 p-4 rounded-xl shadow-xl transition-transform duration-200"
+                         style="font-family: 'WindSong', cursive; font-weight: 400;">
                     </div> 
+                    
                 </div>
 
-                <div class="w-full h-8 md:h-12 border-b-2 border-[#5C3A21]/20"></div>
+                <div class="w-full h-32 md:h-12 border-b-2 border-[#5C3A21]/20"></div>
 
                 <div class="w-full">
                                         
@@ -210,34 +269,45 @@
                     </div>
                 </div>
 
-                <div class="w-full max-w-md mt-8">
+                <div class="w-full bg-white/00 p-2 rounded-2xl text-center">
                     <div class="w-full">
-                        <form id="rsvpForm" class="flex flex-col space-y-4">
-                            <label for="nombre" class="text-3xl md:text-4xl font-semibold text-[#5C3A21] border-b pb-2 text-center"
-                                   style="font-family: 'Allura', cursive; font-style: italic;">Confirma tu Asistencia</label>
-
-                            <p class="text-base md:text-lg text-[#5C3A21] text-center">
-                                Con el fin de que todos podamos disfrutar plenamente de la velada, hemos decidido que esta ocasión será exclusivamente para adultos.
+                        <label for="nombre" class="text-6xl text-[#5C3A21] border-b mb-2 w-[600px]" style="font-family: 'Allura', cursive; font-style: italic;">
+                            Confirma tu Asistencia
+                        </label>
+                        <p class="text-2xl text-black text-center mt-2" style="font-family: 'Playfair Display', serif;">
+                            <span style="font-style: italic; font-size: 1.9rem; display: inline-block;">
+                                <?= htmlspecialchars($invitado['nombre']) ?>
+                            </span><br>
+                            Con el fin de que todos podamos disfrutar plenamente de la velada, hemos decidido que esta ocasión será exclusivamente para adultos.
+                        </p>
+                        <?php if ($invitado['confirmado']): ?>
+                            <p class="text-center font-semibold text-[#5C3A21]">
+                                Ya has respondido: <strong><?= htmlspecialchars($invitado['asistencia']) ?></strong>
                             </p>
-
-                            <select id="nombre" name="nombre"
-                                    class="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#5C3A21]">
-                                <option value="">Seleccione su nombre</option>
-                                </select>
-
-                            <label for="asistencia" class="font-semibold text-[#5C3A21] mt-2">¿Podrás asistir?</label>
-                            <select id="asistencia" name="asistencia" class="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#5C3A21]">
-                                <option value="">Seleccione una opción</option>
-                                <option value="si">Sí, asistiré 🎉</option>
-                                <option value="no">No podré asistir 😔</option>
-                            </select>
-
-                            <button type="submit" class="bg-[#5C3A21] hover:bg-[#7A4C2B] text-white font-bold py-3 px-4 rounded transition duration-300 text-lg shadow-md mt-4">
-                                Confirmar Asistencia
-                            </button>
-
-                            <div id="mensaje" class="mt-4 text-center text-lg font-bold"></div>
-                        </form>
+                        <?php else: ?>
+                            <form method="POST" class="mt-4 text-center text-xl max-w-xs mx-auto">
+                                <p class="mb-4 text-[#5C3A21] font-semibold m-auto">¿Asistirás a la boda?</p>
+                                <div class="flex flex-col space-y-4"> 
+                                    <label class="flex items-center space-x-2 justify-center">
+                                        <input type="radio" name="asistencia" value="si" required class="form-radio">
+                                        <span class="text-[#5C3A21] font-semibold">Sí, asistiré 🎉</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 justify-center">
+                                        <input type="radio" name="asistencia" value="no" required class="form-radio">
+                                        <span class="text-[#5C3A21] font-semibold">No podré asistir 😔</span>
+                                    </label>
+                                </div>
+                                <button type="submit" class="bg-[#5C3A21] hover:bg-[#7A4C2B] text-white font-bold py-3 px-6 rounded transition duration-300 text-lg shadow-md mx-auto block mt-6">
+                                    Enviar Respuesta
+                                </button>
+                            </form>
+                        <?php endif; ?>
+                        
+                        <?php if ($mensaje): ?>
+                            <div class="mensaje mt-4 text-center text-lg font-bold text-[#5C3A21]">
+                                <?= htmlspecialchars($mensaje) ?>
+                            </div>
+                        <?php endif; ?>
                     </div>
                 </div>
 

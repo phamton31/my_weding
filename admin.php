@@ -98,6 +98,18 @@ $baseURL = "https://my-weding.onrender.com?codigo=";
             margin: 40px;
             background: linear-gradient(to right, #f0f4f7, #d9e2ec);
         }
+        .copy-btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 6px 12px;
+            cursor: pointer;
+            margin-left: 5px;
+        }
+        .copy-btn:hover {
+            background: #0056b3;
+        }
         h2 { color: #1b3a57; }
         .panel {
             background: #fff;
@@ -212,7 +224,10 @@ $baseURL = "https://my-weding.onrender.com?codigo=";
                     <td><?= htmlspecialchars($inv['nombre']) ?></td>
                     <td><?= $inv['confirmado'] ? 'Sí' : 'No' ?></td>
                     <td><?= htmlspecialchars($inv['asistencia'] ?? '-') ?></td>
-                    <td><a class="link" href="<?= $baseURL . urlencode($inv['codigo']) ?>" target="_blank">Ver Invitación</a></td>
+                    <td>
+                        <a class="link" href="<?= $baseURL . urlencode($inv['codigo']) ?>" target="_blank">Ver Invitación</a>
+                        <button class="copy-btn" data-link="<?= $baseURL . $inv['codigo'] ?>">Copiar</button>
+                    </td>
                     <td class="actions">
                         <a class="edit" href="admin.php?editar=<?= $inv['id'] ?>">Editar</a>
                         <a class="delete" href="admin.php?eliminar=<?= $inv['id'] ?>" onclick="return confirm('¿Seguro que deseas eliminar este invitado?');">Eliminar</a>
@@ -222,6 +237,18 @@ $baseURL = "https://my-weding.onrender.com?codigo=";
         </tbody>
     </table>
 </div>
+<script>
+document.querySelectorAll('.copy-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const link = btn.getAttribute('data-link');
+        navigator.clipboard.writeText(link).then(() => {
+            alert('Link copiado al portapapeles!');
+        }).catch(err => {
+            console.error('Error al copiar:', err);
+        });
+    });
+});
+</script>
 
 </body>
 </html>
