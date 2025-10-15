@@ -159,18 +159,44 @@ checkboxPareja.addEventListener('change', function() {
 
 formNuevo.addEventListener('submit', async function(e) {
     e.preventDefault();
-    const formData = new FormData(formNuevo);
-    formData.append('action', 'agregar');
+
+    const nombres = Array.from(formNuevo.querySelectorAll('input[name="nombres[]"]'))
+                        .map(input => input.value.trim())
+                        .filter(n => n.length > 0);
+
+    if (nombres.length === 0) {
+        alert('Debes ingresar al menos un nombre.');
+        return;
+    }
+
+    // Creamos un array de invitados
+    const invitados = nombres.map(nombre => ({
+        codigo: '',          // El backend puede generar el código
+        nombre: nombre,
+        confirmado: false,
+        asistencia: ''
+    }));
+
     try {
-        const res = await fetch('post_invitado.php', { method: 'POST', body: formData });
+        const res = await fetch('post_invitado.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ invitados }) // enviamos un objeto con el array
+        });
+
         const data = await res.json();
+
         if (data.success) {
             alert('✅ Invitado agregado correctamente con código: ' + data.codigo);
-            cargarInvitados();
+            formNuevo.reset();
+            parejaDiv.classList.add('hidden');
+            window.location.reload();
         } else {
             alert('⚠️ Error: ' + (data.error || 'No se pudo agregar el invitado'));
         }
-    } catch(err) {
+    } catch (err) {
         console.error(err);
         alert('❌ Error al enviar el formulario.');
     }
