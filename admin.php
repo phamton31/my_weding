@@ -1,18 +1,15 @@
 <?php
 session_start();
 
-
 // --- LOGIN SIMPLE ---
 $usuario_admin = "admin";
-$password_admin = "Dreiser1234!"; // cámbialo si deseas
-
+$password_admin = "Dreiser1234!";
 
 if (isset($_POST['logout'])) {
     session_destroy();
     header("Location: admin.php");
     exit;
 }
-
 
 if (isset($_POST['usuario']) && isset($_POST['password'])) {
     if ($_POST['usuario'] === $usuario_admin && $_POST['password'] === $password_admin) {
@@ -21,7 +18,6 @@ if (isset($_POST['usuario']) && isset($_POST['password'])) {
         $error = "Usuario o contraseña incorrectos";
     }
 }
-
 
 if (!isset($_SESSION['admin'])):
 ?>
@@ -48,95 +44,8 @@ if (!isset($_SESSION['admin'])):
 exit;
 endif;
 
-
-// --- LÓGICA DEL ADMIN ---
-$jsonFile = 'invitados.json';
-
-
-if (!file_exists($jsonFile)) {
-    file_put_contents($jsonFile, '[]');
-    chmod($jsonFile, 0666);
-}
-
-
-$data = json_decode(file_get_contents($jsonFile), true);
-if (!is_array($data)) {
-    $data = [];
-}
-
-
-// Función para generar código aleatorio
-function generarCodigo($longitud = 6) {
-    $caracteres = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    return substr(str_shuffle($caracteres), 0, $longitud);
-}
-
-
-// Crear nuevo invitado
-if (isset($_POST['nuevo_invitado'])) {
-    $nombres = array_map('trim', $_POST['nombres']); // Array de nombres (1 o 2)
-    $codigo = generarCodigo();
-
-
-    foreach ($nombres as $nombre) {
-        if (!empty($nombre)) {
-            $data[] = [
-                "codigo" => $codigo,
-                "nombre" => $nombre,
-                "confirmado" => false,
-                "asistencia" => ""
-            ];
-        }
-    }
-
-
-    file_put_contents($jsonFile, json_encode($data, JSON_PRETTY_PRINT));
-    header("Location: admin.php");
-    exit;
-}
-
-
-// Editar invitado existente
-if (isset($_POST['editar_invitado'])) {
-    $codigo = $_POST['codigo'];
-    $nombres = array_map('trim', explode(',', $_POST['nombres']));
-    $asistencia = $_POST['asistencia'];
-
-
-    $count = 0;
-    foreach ($data as &$inv) {
-        if ($inv['codigo'] === $codigo && isset($nombres[$count])) {
-            $inv['nombre'] = $nombres[$count];
-            $inv['asistencia'] = $asistencia;
-            $count++;
-        }
-    }
-    file_put_contents($jsonFile, json_encode($data, JSON_PRETTY_PRINT));
-    header("Location: admin.php");
-    exit;
-}
-
-
-// Eliminar invitado
-if (isset($_GET['eliminar'])) {
-    $codigo = $_GET['eliminar'];
-    $data = array_filter($data, fn($inv) => $inv['codigo'] !== $codigo);
-    file_put_contents($jsonFile, json_encode(array_values($data), JSON_PRETTY_PRINT));
-    header("Location: admin.php");
-    exit;
-}
-
-
-// Estadísticas
-$total = count($data);
-$confirmados = count(array_filter($data, fn($i) => !empty($i['confirmado'])));
-$asistiran = count(array_filter($data, fn($i) => isset($i['asistencia']) && strtolower($i['asistencia']) === 'si'));
-$no_asistiran = count(array_filter($data, fn($i) => isset($i['asistencia']) && strtolower($i['asistencia']) === 'no'));
-
-
 $base_url = "https://my-weding.onrender.com";
 ?>
-
 
 <!DOCTYPE html>
 <html lang="es">
@@ -147,8 +56,6 @@ $base_url = "https://my-weding.onrender.com";
 </head>
 <body class="bg-gray-100 min-h-screen p-6">
 
-
-<!-- Header -->
 <div class="flex justify-between items-center mb-6">
     <h1 class="text-3xl font-bold text-gray-800">Panel de Invitados</h1>
     <form method="POST">
@@ -156,33 +63,28 @@ $base_url = "https://my-weding.onrender.com";
     </form>
 </div>
 
-
-<!-- Estadísticas -->
 <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
     <div class="bg-white shadow rounded-lg p-4 text-center">
         <p class="text-gray-500">Total Invitados</p>
-        <p class="text-2xl font-bold"><?= $total ?></p>
+        <p class="text-2xl font-bold" id="total">0</p>
     </div>
     <div class="bg-green-100 shadow rounded-lg p-4 text-center">
         <p class="text-gray-500">Confirmados</p>
-        <p class="text-2xl font-bold"><?= $confirmados ?></p>
+        <p class="text-2xl font-bold" id="confirmados">0</p>
     </div>
     <div class="bg-blue-100 shadow rounded-lg p-4 text-center">
         <p class="text-gray-500">Asistirán</p>
-        <p class="text-2xl font-bold"><?= $asistiran ?></p>
+        <p class="text-2xl font-bold" id="asistiran">0</p>
     </div>
     <div class="bg-red-100 shadow rounded-lg p-4 text-center">
         <p class="text-gray-500">No Asistirán</p>
-        <p class="text-2xl font-bold"><?= $no_asistiran ?></p>
+        <p class="text-2xl font-bold" id="no_asistiran">0</p>
     </div>
 </div>
 
-
-<!-- Formulario nuevo invitado con opción de pareja -->
 <div class="bg-white p-4 rounded-lg shadow mb-6">
     <h2 class="text-xl font-semibold mb-2">Agregar Nuevo Invitado</h2>
-    <form method="POST" class="flex flex-col md:flex-row md:items-end gap-4">
-        <input type="hidden" name="nuevo_invitado" value="1">
+    <form id="formNuevoInvitado" class="flex flex-col md:flex-row md:items-end gap-4">
         <div class="flex-1">
             <label class="block text-sm text-gray-600 mb-1">Nombre principal</label>
             <input type="text" name="nombres[]" required class="w-full border rounded px-3 py-2">
@@ -195,34 +97,12 @@ $base_url = "https://my-weding.onrender.com";
             <input type="checkbox" id="agregarPareja" class="h-4 w-4">
             <label for="agregarPareja" class="text-sm text-gray-600">Agregar pareja</label>
         </div>
-        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded">
-            Agregar
-        </button>
+        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded">Agregar</button>
     </form>
 </div>
 
-
-<script>
-const checkboxPareja = document.getElementById('agregarPareja');
-const parejaDiv = document.getElementById('parejaDiv');
-
-
-checkboxPareja.addEventListener('change', function() {
-    if (this.checked) {
-        parejaDiv.classList.remove('hidden');
-        parejaDiv.querySelector('input').required = true;
-    } else {
-        parejaDiv.classList.add('hidden');
-        parejaDiv.querySelector('input').required = false;
-        parejaDiv.querySelector('input').value = '';
-    }
-});
-</script>
-
-
-<!-- Tabla de invitados -->
 <div class="bg-white shadow-lg rounded-lg p-4 overflow-x-auto">
-    <table class="min-w-full border border-gray-200">
+    <table class="min-w-full border border-gray-200" id="tablaInvitados">
         <thead class="bg-gray-50">
         <tr>
             <th class="py-2 px-4 border">Código</th>
@@ -233,63 +113,13 @@ checkboxPareja.addEventListener('change', function() {
             <th class="py-2 px-4 border">Acciones</th>
         </tr>
         </thead>
-        <tbody>
-        <?php
-        // Agrupar nombres por código
-        $grupos = [];
-        foreach ($data as $inv) {
-            $codigo = $inv['codigo'];
-            if (!isset($grupos[$codigo])) {
-                $grupos[$codigo] = [
-                    "codigo" => $codigo,
-                    "nombres" => [],
-                    "asistencia" => $inv['asistencia'] ?? '',
-                    "confirmado" => $inv['confirmado'] ?? false
-                ];
-            }
-            $grupos[$codigo]["nombres"][] = $inv['nombre'];
-        }
-
-
-        foreach ($grupos as $grupo):
-        ?>
-        <tr class="hover:bg-gray-50 text-center">
-            <td class="py-2 px-4 border font-mono"><?= htmlspecialchars($grupo['codigo']) ?></td>
-            <td class="py-2 px-4 border"><?= htmlspecialchars(implode(', ', $grupo['nombres'])) ?></td>
-            <td class="py-2 px-4 border"><?= htmlspecialchars($grupo['asistencia'] ?? '-') ?></td>
-            <td class="py-2 px-4 border"><?= !empty($grupo['confirmado']) ? '✅' : '❌' ?></td>
-            <td class="py-2 px-4 border">
-                <?php $link = "{$base_url}/?codigo=" . urlencode($grupo['codigo']); ?>
-                <div class="flex flex-col items-center">
-                    <input 
-                        type="text"
-                        readonly
-                        value="<?= htmlspecialchars($link) ?>"
-                        class="border border-gray-300 rounded px-2 py-1 w-48 text-sm text-center bg-gray-50 cursor-pointer select-all mb-1"
-                        onclick="navigator.clipboard.writeText(this.value).then(() => alert('Enlace copiado ✅'))"
-                    >
-                    <a href="<?= htmlspecialchars($link) ?>" target="_blank" class="text-blue-600 hover:underline text-sm">Abrir</a>
-                </div>
-            </td>
-            <td class="py-2 px-4 border space-x-2">
-                <button 
-                  onclick="editarInvitado('<?= htmlspecialchars($grupo['codigo']) ?>', '<?= htmlspecialchars(implode(', ', $grupo['nombres'])) ?>', '<?= htmlspecialchars($grupo['asistencia'] ?? '') ?>')"
-                  class="text-blue-600 hover:text-blue-800 font-semibold">Editar</button>
-                <a href="?eliminar=<?= urlencode($grupo['codigo']) ?>" 
-                   class="text-red-600 hover:text-red-800 font-semibold"
-                   onclick="return confirm('¿Seguro que deseas eliminar este grupo de invitados?')">Eliminar</a>
-            </td>
-        </tr>
-        <?php endforeach; ?>
-        </tbody>
+        <tbody></tbody>
     </table>
 </div>
 
-
-<!-- Modal de edición -->
 <div id="modal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center">
     <div class="bg-white rounded-lg shadow-lg p-6 w-96 relative">
-        <form method="POST" id="formEditar">
+        <form id="formEditar">
             <input type="hidden" name="editar_invitado" value="1">
             <input type="hidden" name="codigo" id="editCodigo">
             <h2 class="text-xl font-semibold mb-4">Editar Invitado</h2>
@@ -297,7 +127,7 @@ checkboxPareja.addEventListener('change', function() {
             <input type="text" name="nombres" id="editNombres" required class="w-full border rounded px-3 py-2 mb-3">
             <label class="block mb-1 text-sm text-gray-600">Asistencia</label>
             <select name="asistencia" id="editAsistencia" class="w-full border rounded px-3 py-2 mb-4">
-                <option value="">Sin confirmar</option>
+                <option value="">Pendiente</option>
                 <option value="si">Sí asistirá</option>
                 <option value="no">No asistirá</option>
             </select>
@@ -309,19 +139,151 @@ checkboxPareja.addEventListener('change', function() {
     </div>
 </div>
 
-
 <script>
-function editarInvitado(codigo, nombres, asistencia) {
+const formNuevo = document.getElementById('formNuevoInvitado');
+const checkboxPareja = document.getElementById('agregarPareja');
+const parejaDiv = document.getElementById('parejaDiv');
+const tablaBody = document.querySelector('#tablaInvitados tbody');
+let invitadosData = [];
+
+checkboxPareja.addEventListener('change', function() {
+    if (this.checked) {
+        parejaDiv.classList.remove('hidden');
+        parejaDiv.querySelector('input').required = true;
+    } else {
+        parejaDiv.classList.add('hidden');
+        parejaDiv.querySelector('input').required = false;
+        parejaDiv.querySelector('input').value = '';
+    }
+});
+
+formNuevo.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const formData = new FormData(formNuevo);
+    formData.append('action', 'agregar');
+    try {
+        const res = await fetch('post_invitado.php', { method: 'POST', body: formData });
+        const data = await res.json();
+        if (data.success) {
+            alert('✅ Invitado agregado correctamente con código: ' + data.codigo);
+            cargarInvitados();
+        } else {
+            alert('⚠️ Error: ' + (data.error || 'No se pudo agregar el invitado'));
+        }
+    } catch(err) {
+        console.error(err);
+        alert('❌ Error al enviar el formulario.');
+    }
+});
+
+function cerrarModal() {
+    document.getElementById('modal').classList.add('hidden');
+}
+
+document.getElementById('formEditar').addEventListener('submit', async function(e){
+    e.preventDefault();
+    const codigo = document.getElementById('editCodigo').value;
+    const nombres = document.getElementById('editNombres').value.split(',').map(n=>n.trim());
+    const asistencia = document.getElementById('editAsistencia').value;
+
+    const formData = new FormData();
+    formData.append('action', 'editar');
+    formData.append('codigo', codigo);
+    nombres.forEach(n => formData.append('nombres[]', n));
+    formData.append('asistencia', asistencia);
+
+    const res = await fetch('post_invitado.php', { method:'POST', body: formData });
+    const data = await res.json();
+    if(data.success) {
+        alert('✅ Invitado editado correctamente');
+        cargarInvitados();
+        cerrarModal();
+    } else {
+        alert('⚠️ Error: '+ (data.error || 'No se pudo editar'));
+    }
+});
+
+async function eliminarInvitado(codigo){
+    if(!confirm('¿Seguro que deseas eliminar este grupo de invitados?')) return;
+    const formData = new FormData();
+    formData.append('action', 'eliminar');
+    formData.append('codigo', codigo);
+    const res = await fetch('post_invitado.php', { method:'POST', body: formData });
+    const data = await res.json();
+    if(data.success){
+        alert('✅ Invitado eliminado');
+        cargarInvitados();
+    } else {
+        alert('⚠️ Error: '+ (data.error || 'No se pudo eliminar'));
+    }
+}
+
+function editarInvitadoModal(codigo, nombres, asistencia){
     document.getElementById('modal').classList.remove('hidden');
     document.getElementById('editCodigo').value = codigo;
     document.getElementById('editNombres').value = nombres;
     document.getElementById('editAsistencia').value = asistencia;
 }
-function cerrarModal() {
-    document.getElementById('modal').classList.add('hidden');
-}
-</script>
 
+function renderTabla(data){
+    invitadosData = data;
+    tablaBody.innerHTML = '';
+    let grupos = {};
+    data.forEach(inv => {
+        if(!grupos[inv.codigo]){
+            grupos[inv.codigo] = { codigo: inv.codigo, nombres: [], asistencia: inv.asistencia || '' };
+        }
+        grupos[inv.codigo].nombres.push(inv.nombre);
+    });
+
+    let total=0, confirmados=0, asistiran=0, no_asistiran=0;
+    for(let g of Object.values(grupos)){
+        total++;
+        if(g.asistencia) confirmados++;
+        if(g.asistencia.toLowerCase() === 'si') asistiran++;
+        if(g.asistencia.toLowerCase() === 'no') no_asistiran++;
+
+        const asistenciaDisplay = g.asistencia ? g.asistencia.charAt(0).toUpperCase() + g.asistencia.slice(1) : 'Pendiente';
+        const link = "<?= $base_url ?>/?codigo=" + encodeURIComponent(g.codigo);
+
+        const tr = document.createElement('tr');
+        tr.classList.add('hover:bg-gray-50','text-center');
+        tr.innerHTML = `
+            <td class="py-2 px-4 border font-mono">${g.codigo}</td>
+            <td class="py-2 px-4 border">${g.nombres.join(', ')}</td>
+            <td class="py-2 px-4 border">${asistenciaDisplay}</td>
+            <td class="py-2 px-4 border">${g.asistencia ? '✅':'❌'}</td>
+            <td class="py-2 px-4 border">
+                <div class="flex flex-col items-center">
+                    <input type="text" readonly value="${link}" class="border border-gray-300 rounded px-2 py-1 w-48 text-sm text-center bg-gray-50 cursor-pointer select-all mb-1" onclick="navigator.clipboard.writeText(this.value).then(()=>alert('Enlace copiado ✅'))">
+                    <a href="${link}" target="_blank" class="text-blue-600 hover:underline text-sm">Abrir</a>
+                </div>
+            </td>
+            <td class="py-2 px-4 border space-x-2">
+                <button onclick="editarInvitadoModal('${g.codigo}','${g.nombres.join(', ')}','${g.asistencia}')" class="text-blue-600 hover:text-blue-800 font-semibold">Editar</button>
+                <button onclick="eliminarInvitado('${g.codigo}')" class="text-red-600 hover:text-red-800 font-semibold">Eliminar</button>
+            </td>`;
+        tablaBody.appendChild(tr);
+    }
+
+    document.getElementById('total').innerText = total;
+    document.getElementById('confirmados').innerText = confirmados;
+    document.getElementById('asistiran').innerText = asistiran;
+    document.getElementById('no_asistiran').innerText = no_asistiran;
+}
+
+async function cargarInvitados(){
+    const res = await fetch('get_invitados.php');
+    const data = await res.json();
+    if(data.success){
+        renderTabla(data.data);
+    } else {
+        alert('Error al cargar invitados: ' + data.error);
+    }
+}
+
+window.addEventListener('load', cargarInvitados);
+</script>
 
 </body>
 </html>

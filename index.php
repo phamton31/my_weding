@@ -29,32 +29,7 @@
         .scroll-indicator {
             animation: rotate-arrow 1.5s infinite;
         }
-
-        /* Estilos de la página 2 */
-        /* .linea-pulsante { */
-            /* width: 80%; */
-            /* height: 6px; */
-            /* background-color: #5C3A21; */
-            /* border-radius: 3px; */
-            /* animation: pulso 1.5s infinite; */
-            /* margin: 0 auto; */
-        /* } */
-
-        /* @keyframes pulso { */
-            /* 0%, 100% { opacity: 1; transform: scaleX(1); } */
-            /* 50% { opacity: 0.5; transform: scaleX(1.05); } */
-        /* } */
-
-        /* .countdown { */
-            /* font-size: 2.5rem; */
-            /* color: #5C3A21; */
-            /* margin-top: -4px; */
-            /* text-align: center; */
-        /* } */
-
-        /* @media (min-width: 768px) { */
-            /* .countdown { font-size: 3rem; } */
-        /* } */
+        
         @keyframes pulso-contador {
             0%, 100% { transform: scale(1); opacity: 1; }
             50% { transform: scale(1.02); opacity: 0.95; } /* Pulso sutil en el reloj */
@@ -283,17 +258,17 @@
 
     <script>
         const form = document.getElementById("rsvpForm");
-        const mensaje = document.getElementById("mensaje");
-        const nombreSelect = document.getElementById("nombre");
-        const asistenciaRadios = document.querySelectorAll('input[name="asistencia"]');
+const mensaje = document.getElementById("mensaje");
+const nombreSelect = document.getElementById("nombre");
+const asistenciaSelect = document.getElementById("asistencia");
+const invitadosList = document.getElementById("invitadosList"); // <ul> donde se mostrará la lista
+const urlParams = new URLSearchParams(window.location.search);
+const codigo = urlParams.get("codigo");
+let invitados = [];
+let invitadoActual = null;
 
-        const urlParams = new URLSearchParams(window.location.search);
-        const codigo = urlParams.get("codigo");
-        let invitados = [];
-        let invitadoActual = null;
-
-        // ✅ Cargar invitados
-        fetch("invitados.json")
+// ✅ Cargar invitados desde PHP
+        fetch("get_invitados.php")
             .then(res => res.json())
             .then(data => {
                 invitados = data;
@@ -302,85 +277,118 @@
                     mensaje.textContent = "❌ Código de invitación no proporcionado en la URL.";
                     nombreSelect.innerHTML = '<option value="">Código requerido</option>';
                     nombreSelect.disabled = true;
+                    asistenciaSelect.disabled = true;
                     return;
                 }
             
-                // Agrupamos todos los registros con el mismo código
                 const grupo = invitados.filter(inv => inv.codigo === codigo);
             
                 if (grupo.length === 0) {
                     mensaje.textContent = "⚠️ Código no válido. Verifique su enlace de invitación.";
                     nombreSelect.innerHTML = '<option value="">Código no encontrado</option>';
                     nombreSelect.disabled = true;
+                    asistenciaSelect.disabled = true;
                     return;
                 }
             
                 actualizarSelect(grupo);
+                renderLista(grupo); // <-- renderizamos la lista
             })
             .catch(err => {
                 console.error("Error cargando invitados:", err);
                 nombreSelect.innerHTML = '<option value="">Error al cargar datos</option>';
+                asistenciaSelect.disabled = true;
             });
         
-        // ✅ Nuevo actualizarSelect
-        function actualizarSelect(grupo) {
-            nombreSelect.innerHTML = '<option value="">Seleccione su nombre</option>';
-        
+            function actualizarSelect(grupo) {
+            nombreSelect.innerHTML = '<option value="">Seleccione su nombre</option>';      
+
             grupo.forEach(inv => {
                 const option = document.createElement("option");
-                option.value = inv.nombre;
-                option.textContent = inv.nombre + (inv.confirmado ? " (Ya confirmado)" : "");
-                option.disabled = inv.confirmado;
+                option.value = inv.nombre;      
+
+                // Determinar estado según asistencia
+                let estado = "";
+                if (!inv.asistencia || inv.asistencia === "null") {
+                    estado = ""; // no confirmado
+                    option.disabled = false;
+                } else if (inv.asistencia.toLowerCase() === "sí") {
+                    estado = " (Ya confirmado)";
+                    option.disabled = true;
+                } else {
+                    estado = " (No asistirá)";
+                    option.disabled = true;
+                }       
+
+                option.textContent = inv.nombre + estado;
                 nombreSelect.appendChild(option);
-            });
-        
-            // Verificamos si todo el grupo ya confirmó
-            const todosConfirmados = grupo.every(inv => inv.confirmado);
-            if (todosConfirmados) {
-                mensaje.textContent = "✅ Este grupo ya confirmó su asistencia.";
+            });     
+
+            // Verificar si todos respondieron
+            const todosRespondieron = grupo.every(inv => inv.asistencia && inv.asistencia.toLowerCase() !== "");
+            if (todosRespondieron) {
+                mensaje.textContent = "✅ Este grupo ya respondió.";
+                nombreSelect.disabled = true;
+                asistenciaSelect.disabled = true;
+            } else {
+                nombreSelect.disabled = false;
+                asistenciaSelect.disabled = false;
             }
+    }
+
+// Renderizado de lista
+function renderLista(grupo) {
+    if (!invitadosList) return;
+    invitadosList.innerHTML = "";
+
+    grupo.forEach(inv => {
+        let estado = "";
+        if (!inv.asistencia || inv.asistencia === "null") {
+            estado = "❌ Pendiente";
+        } else if (inv.asistencia.toLowerCase() === "sí") {
+            estado = "✅ Confirmado";
+        } else {
+            estado = "❌ No asistirá";
         }
 
-        // ✅ Evento al seleccionar nombre
+        const li = document.createElement("li");
+        li.textContent = `${inv.nombre} - ${estado}`;
+        invitadosList.appendChild(li);
+    });
+}
+        
+        // Evento al seleccionar nombre
         nombreSelect.addEventListener("change", e => {
             const nombreSeleccionado = e.target.value;
             invitadoActual = invitados.find(inv => inv.codigo === codigo && inv.nombre === nombreSeleccionado);
-        
             if (!invitadoActual) {
-                asistenciaRadios.forEach(r => r.checked = false);
+                asistenciaSelect.value = "";
                 return;
             }
-        
-            asistenciaRadios.forEach(r => {
-                r.checked = invitadoActual.asistencia === r.value;
-            });
+            asistenciaSelect.value = invitadoActual.asistencia || "";
         });
-
-        // ✅ Envío del formulario
+        
+        // Envío del formulario
         form.addEventListener("submit", e => {
             e.preventDefault();
-        
             if (!codigo) {
                 mensaje.textContent = "❌ No se encontró el código de invitación.";
                 return;
             }
-        
             const nombre = nombreSelect.value;
             if (!nombre) {
                 mensaje.textContent = "⚠️ Por favor seleccione su nombre.";
                 return;
             }
-        
-            const asistencia = document.querySelector('input[name="asistencia"]:checked');
+            const asistencia = asistenciaSelect.value;
             if (!asistencia) {
                 mensaje.textContent = "⚠️ Por favor seleccione si asistirá o no.";
                 return;
             }
-        
             const formData = new FormData();
             formData.append("codigo", codigo);
             formData.append("nombre", nombre);
-            formData.append("asistencia", asistencia.value);
+            formData.append("asistencia", asistencia);
         
             fetch("confirmacion.php", {
                 method: "POST",
@@ -392,6 +400,11 @@
                     mensaje.textContent = "🎉 Gracias, " + nombre + ". Tu respuesta fue registrada correctamente.";
                     nombreSelect.querySelector(`option[value="${nombre}"]`).disabled = true;
                     nombreSelect.value = "";
+                    asistenciaSelect.value = "";
+                
+                    // Actualizamos la lista
+                    const grupo = invitados.filter(inv => inv.codigo === codigo);
+                    renderLista(grupo);
                 } else {
                     mensaje.textContent = "⚠️ " + (data.error || "Ocurrió un error al guardar la respuesta.");
                 }
@@ -402,6 +415,7 @@
             });
         });
 
+    
         // Lógica de Cuenta Regresiva
         const targetDate = new Date("November 7, 2025 18:30:00").getTime();
         const countdownElement = document.getElementById("countdown");
