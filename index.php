@@ -55,14 +55,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <!DOCTYPE html>
 <html lang="es" class="scroll-smooth">
 <head>
+
     <meta charset="UTF-8">
-    <title>Invitación de Boda - Dreiser & Mayerly</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Información general -->
+    <title>Te invitamos a Nuestra Boda | Dreiser & Mayerly 💍</title>
+    <meta name="description" content="Acompáñanos en este día tan especial. Confirma tu asistencia y descubre todos los detalles de nuestra boda.">
+
+    <!-- Open Graph para redes sociales -->
+    <meta property="og:title" content="Invitación de Boda - Dreiser & Mayerly 💌">
+    <meta property="og:description" content="Únete a nuestra celebración y vive con nosotros este momento inolvidable.">
+    <meta property="og:image" content="https://my-weding.onrender.com/img/preview.png"> <!-- imagen que se mostrará -->
+    <meta property="og:url" content="https://my-weding.onrender.com/">
+    <meta property="og:type" content="website">
+
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&family=Great+Vibes&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Windsong&display=swap" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Karla:ital,wght@0,200..800;1,200..800&family=UnifrakturCook:wght@700&family=WindSong:wght@400;500&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Allura&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="img/anillos.png">
+
     
     <script src="https://cdn.tailwindcss.com"></script>
 
@@ -247,6 +262,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
             </div>
         </div>
+    </section>
+
+    <section class="relative bg-[url('img/sobres.png')] bg-cover bg-center bg-no-repeat w-screen h-[205px] bg-opacity-70 text-center">
+        <!-- Capa semitransparente -->
+        <div class="absolute inset-0 bg-blue-300/30"></div>
+              
+        <!-- Texto centrado -->
+        <h2 class="absolute inset-0 flex items-center justify-center text-8xl text-[#5C3A21] w-[600px] m-auto" style="font-family: 'Allura', cursive; font-style: italic;">
+          Lluvia de sobres
+        </h2>
     </section>
 
     <section id="confirmacion" class="w-full min-h-screen p-6 md:p-12 flex flex-col items-center justify-center relative bg-blue-300/50">
